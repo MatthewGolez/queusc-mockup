@@ -26,16 +26,8 @@ var titles = {
       faculty: "Sionzon, Marian Concepcion R.", units: 3, enrolled: 30, cap: 40 }
   ];
 
-  var users = [
-    { id: "25100872", email: "25100872@usc.edu.ph", first: "Caroline", middle: "Sio Ang", last: "Gobonseng", color: "#7B57B8" },
-    { id: "25100916", email: "25100916@usc.edu.ph", first: "Sebastian", middle: "Douglas Sauro", last: "Subang", color: "#2F5FB3" },
-    { id: "22103502", email: "22103502@usc.edu.ph", first: "Matthew", middle: "Benedict", last: "Golez", color: "#8A5A4A" }
-  ];
-  var PROGRAM = "BS Information Systems \u00b7 2nd Year, IS-A";
-  var currentUser = null;
-
-  function fullName(u){ return u.first + " " + u.middle + " " + u.last; }
-  function shortName(u){ return u.first + " " + u.last.charAt(0) + "."; }
+  // The guard in <head> already sent signed-out visitors to login.html.
+  var currentUser = QueuAuth.current();
 
   var state = { selected: {}, waitlisted: {}, enrolled: false };
   courses.forEach(function(c){ state.selected[c.id] = !isFull(c); });
@@ -195,6 +187,7 @@ var titles = {
   }
 
   document.querySelector(".js-enroll").addEventListener("click", function(){
+    if (!checkSession()) return;
     if (state.enrolled){
       downloadStudyLoad(this);
       return;
@@ -233,7 +226,7 @@ var titles = {
     loadJsPdf().then(function(){
       var doc = buildStudyLoadPdf(list, {
         term: "1st Semester, A.Y. 2026\u20132027",
-        student: fullName(currentUser) + " \u00b7 " + currentUser.id + " \u00b7 " + PROGRAM,
+        student: QueuAuth.fullName(currentUser) + " \u00b7 " + currentUser.id + " \u00b7 " + QueuAuth.program,
         generated: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
         units: list.reduce(function(s, c){ return s + c.units; }, 0),
         waitlisted: courses.filter(function(c){ return state.waitlisted[c.id]; }).map(function(c){ return c.code; })
@@ -261,73 +254,41 @@ var titles = {
     location.hash = "#dashboard";
   });
 
-  /* ---------- Sign in ---------- */
+  /* ---------- Session ---------- */
 
-  var SESSION_KEY = "queusc.user";
-  function remember(id){
-    try { id ? localStorage.setItem(SESSION_KEY, id) : localStorage.removeItem(SESSION_KEY); } catch (e) {}
-  }
-  function remembered(){
-    try { return localStorage.getItem(SESSION_KEY); } catch (e) { return null; }
-  }
-
-  function renderAccounts(){
-    var list = document.getElementById("accounts");
-    list.innerHTML = "";
-    users.forEach(function(u){
-      var li = document.createElement("li");
-      li.innerHTML = '<button type="button" class="account" data-user="' + u.id + '">' +
-        '<span class="avatar" style="background:' + u.color + '">' + u.first.charAt(0) + "</span>" +
-        '<span class="acct-text"><span class="acct-name"><b>' + u.first + "</b> " + u.middle + " <b>" + u.last + "</b></span>" +
-        '<span class="acct-email">' + u.email + "</span></span>" +
-        '<svg class="ic"><use href="#i-arrow"/></svg></button>';
-      list.appendChild(li);
-    });
-  }
-
-  function signIn(u){
-    currentUser = u;
-    remember(u.id);
-    document.body.classList.remove("signed-out");
+  function showUser(u){
     $(".js-avatar").forEach(function(el){
       el.textContent = u.first.charAt(0) + u.last.charAt(0);
       el.style.background = u.color;
       el.style.color = "#fff";
     });
-    setText(".js-user-name", shortName(u));
+    setText(".js-user-name", QueuAuth.shortName(u));
     titles.dashboard[0] = "Welcome back, " + u.first;
-    goToPage(location.hash.slice(1));
   }
 
-  function signOut(){
-    currentUser = null;
-    remember(null);
-    resetDemo();
-    document.body.classList.add("signed-out");
-    document.getElementById("login-email").value = "";
-    document.getElementById("login-error").textContent = "";
-    history.replaceState(null, "", location.pathname);
-    window.scrollTo(0, 0);
+  // Re-check the stored session: it may have expired, or another tab signed out or switched accounts.
+  function checkSession(){
+    var u = QueuAuth.current();
+    if (!u){
+      var page = location.hash.slice(1);
+      QueuAuth.go("login.html?reason=ended" + (page ? "&next=" + encodeURIComponent(page) : ""));
+      return false;
+    }
+    if (currentUser && u.id !== currentUser.id){ location.reload(); return false; }
+    return true;
   }
 
-  document.getElementById("accounts").addEventListener("click", function(e){
-    var btn = e.target.closest("[data-user]");
-    if (!btn) return;
-    signIn(users.filter(function(u){ return u.id === btn.dataset.user; })[0]);
+  $(".js-signout").forEach(function(b){
+    b.addEventListener("click", function(){
+      QueuAuth.signOut();
+      QueuAuth.go("login.html");
+    });
   });
 
-  document.getElementById("login-form").addEventListener("submit", function(e){
-    e.preventDefault();
-    var email = document.getElementById("login-email").value.trim().toLowerCase();
-    var err = document.getElementById("login-error");
-    var match = users.filter(function(u){ return u.email === email; })[0];
-    if (!email) err.textContent = "Enter your USC email.";
-    else if (!/@usc\.edu\.ph$/.test(email)) err.textContent = "Use your @usc.edu.ph email.";
-    else if (!match) err.textContent = "No QueuSC account found for " + email + ".";
-    else { err.textContent = ""; signIn(match); }
-  });
-
-  $(".js-signout").forEach(function(b){ b.addEventListener("click", signOut); });
+  window.addEventListener("storage", function(e){ if (!e.key || e.key === "queusc.session") checkSession(); });
+  window.addEventListener("pageshow", function(e){ if (e.persisted) checkSession(); });
+  document.addEventListener("visibilitychange", function(){ if (!document.hidden) checkSession(); });
+  setInterval(checkSession, 30000);
 
   /* ---------- Countdown ---------- */
 
@@ -367,9 +328,9 @@ var titles = {
 
   window.addEventListener("hashchange", function(){ goToPage(location.hash.slice(1)); });
 
-  renderAccounts();
-  render();
-  tick();
-  var saved = users.filter(function(u){ return u.id === remembered(); })[0];
-  if (saved) signIn(saved);
-  else document.body.classList.add("signed-out");
+  if (currentUser){
+    showUser(currentUser);
+    render();
+    tick();
+    goToPage(location.hash.slice(1));
+  }
