@@ -96,7 +96,18 @@ function buildStudyLoadPdf(courses, opts){
       doc.setDrawColor("#BBBBBB").line(mx, yy + lineH, mx + listW, yy + lineH);
     }
 
-    doc.setFontSize(8);
+    // Keep the course list and total clear of the footer: move them to a second page when they won't fit.
+    var footerTop = pageH - 14;
+    if (ty + lineH * (courses.length + 1) + 8 > footerTop){
+      doc.addPage();
+      doc.setTextColor(INK).setFont("helvetica", "bold").setFontSize(12);
+      doc.text("Study Load (continued)", mx, 16);
+      doc.setFont("helvetica", "normal").setFontSize(9);
+      doc.text(opts.student, mx, 22);
+      ty = 30;
+    }
+
+    doc.setFontSize(8).setTextColor(INK);
     row(cols.map(function(col){ return col[0]; }), ty, true, "#EEEEEE");
     courses.forEach(function(c, i){
       var rowY = ty + lineH * (i + 1);
@@ -106,9 +117,14 @@ function buildStudyLoadPdf(courses, opts){
     doc.setFont("helvetica", "bold");
     doc.text("Total units: " + opts.units.toFixed(1), mx + listW - 2, endY + 5, { align: "right" });
 
-    /* Footer */
-    doc.setFont("helvetica", "normal").setFontSize(7.5).setTextColor(MUTED);
-    doc.text("Mock-up for QueuSC, CIS 2102 final project. Data is illustrative.", mx, pageH - 8);
+    /* Footer on every page */
+    var pages = doc.internal.getNumberOfPages();
+    for (var pg = 1; pg <= pages; pg++){
+      doc.setPage(pg);
+      doc.setFont("helvetica", "normal").setFontSize(7.5).setTextColor(MUTED);
+      doc.text("Mock-up for QueuSC, CIS 2102 final project. Data is illustrative.", mx, pageH - 8);
+      if (pages > 1) doc.text("Page " + pg + " of " + pages, pageW - mx, pageH - 8, { align: "right" });
+    }
 
     return doc;
   }
