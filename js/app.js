@@ -482,17 +482,6 @@ var titles = {
     });
   }
 
-  function resetDemo(){
-    state = freshState();
-    windowEnd = Date.now() + (2 * 3600 + 14 * 60 + 9) * 1000;
-    render();
-  }
-
-  document.querySelector(".js-reset").addEventListener("click", function(){
-    resetDemo();
-    location.hash = "#dashboard";
-  });
-
   /* ---------- Session ---------- */
 
   function showUser(u){
