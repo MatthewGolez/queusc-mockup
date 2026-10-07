@@ -3,399 +3,206 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>QueuSC: Enrollment Dashboard</title>
+<meta name="theme-color" content="#0F3324">
+<title>QueuSC Enrollment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M16 13h2M3 10h18M7 6V4h10v2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5 9 17.5 20 6.5"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 21V5M8 7h7"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 20h20zM12 10v4M12 17h.01"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+</svg>
+
+<a class="skip" href="#main">Skip to content</a>
+
 <div class="app">
 
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand-text">
-        <span class="mark">QueuSC</span>
-        <span class="motto">Scientia &middot; Virtus &middot; Devotio</span>
-      </div>
-      <span class="sub">Enrollment, A.Y. 2026-2027</span>
+      <span class="mark">QueuSC</span>
+      <span class="motto">Scientia &middot; Virtus &middot; Devotio</span>
     </div>
-    <nav class="sidenav">
-      <a data-page="dashboard" class="active">Dashboard</a>
-      <a data-page="downpayment">Downpayment</a>
-      <a data-page="advise">Advise &amp; Enroll</a>
-      <a data-page="history">Course History</a>
+    <nav class="sidenav" aria-label="Primary">
+      <a href="#dashboard" data-page="dashboard"><svg class="ic"><use href="#i-home"/></svg>Dashboard</a>
+      <a href="#advise" data-page="advise"><svg class="ic"><use href="#i-list"/></svg>Advise &amp; Enroll<span class="live-dot js-live" aria-label="Window open"></span></a>
+      <a href="#downpayment" data-page="downpayment"><svg class="ic"><use href="#i-wallet"/></svg>Downpayment</a>
+      <a href="#history" data-page="history"><svg class="ic"><use href="#i-book"/></svg>Course History</a>
     </nav>
-    <div class="side-foot">
-      Signed in as<br><b style="color:#DDE7DA;">2nd Year, IS-A</b>
+    <div class="side-foot js-window-foot">
+      <span class="sf-label">Your window closes in</span>
+      <span class="sf-time js-countdown" role="timer">2:14:09</span>
+      <span class="sf-sub">Today, 6:00 PM</span>
     </div>
   </aside>
 
-  <main class="main">
-    <div class="topbar">
+  <main class="main" id="main">
+    <header class="topbar">
       <div>
-        <h1 id="page-title">Dashboard</h1>
-        <p id="page-sub">A quick look at where you stand this enrollment period.</p>
+        <h1 id="page-title">Welcome back, Matthew</h1>
+        <p id="page-sub">1st Semester enrollment, A.Y. 2026&ndash;2027</p>
       </div>
       <div class="student-chip">
-        <div class="avatar">MG</div>
+        <div class="avatar" aria-hidden="true">MG</div>
         <div class="who">
           <b>Matthew G.</b>
-          <span>BS Information Systems, 2nd Yr</span>
+          <span>BS Information Systems &middot; 2nd Year, IS-A</span>
         </div>
       </div>
-    </div>
+    </header>
 
     <!-- DASHBOARD -->
-    <section class="page active" id="page-dashboard">
+    <section class="page" id="page-dashboard" aria-labelledby="page-title">
 
-      <div class="card-grid">
-        <div class="info-card status-ok-card">
-          <div class="cl">Downpayment</div>
-          <div class="cv">Paid</div>
-          <div class="cf">Php 3,000.00 confirmed, Jul 20</div>
+      <div class="hero js-hero-open">
+        <div class="hero-main">
+          <span class="eyebrow"><span class="pulse"></span>Your enrollment window is open</span>
+          <h2>Enroll before <span class="nowrap">6:00 PM today</span></h2>
+          <p>Your adviser has already picked your courses. Review them and confirm. It takes about a minute.</p>
+          <div class="hero-actions">
+            <a class="btn btn-gold btn-lg" href="#advise"><span>Review &amp; enroll <span class="js-sel-units">15</span> units</span><svg class="ic"><use href="#i-arrow"/></svg></a>
+          </div>
         </div>
-        <div class="info-card status-ok-card">
-          <div class="cl">Enrollment window</div>
-          <div class="cv small">2nd Year, today</div>
-          <div class="cf">Aug 5, 8:00 AM to 6:00 PM</div>
-        </div>
-        <div class="info-card status-pending-card">
-          <div class="cl">Advised load</div>
-          <div class="cv">18.00 units</div>
-          <div class="cf">6 courses in your Advised list</div>
+        <div class="hero-timer">
+          <div class="ht-time js-countdown" role="timer">2:14:09</div>
+          <div class="ht-label">left in your window</div>
         </div>
       </div>
 
-    </section>
-
-    <!-- DOWNPAYMENT -->
-    <section class="page" id="page-downpayment">
-
-      <div class="dp-layout">
-        <div class="dp-card">
-          <div class="dp-label">Amount due, First Semester A.Y. 2026-2027</div>
-          <div class="dp-amount">Php 3,000.00</div>
-          <span class="dp-status-badge">Paid in full</span>
-
-          <div class="dp-details">
-            <div>
-              <div class="dl">Reference number</div>
-              <div class="dv">DP-2026-118273</div>
-            </div>
-            <div>
-              <div class="dl">Date paid</div>
-              <div class="dv">July 20, 2026</div>
-            </div>
-            <div>
-              <div class="dl">Payment channel</div>
-              <div class="dv">Over the counter, Business Office</div>
-            </div>
-            <div>
-              <div class="dl">Applies to</div>
-              <div class="dv">Enrollment slot, First Semester</div>
-            </div>
+      <div class="hero hero-done js-hero-done" hidden>
+        <div class="hero-main">
+          <span class="eyebrow"><svg class="ic"><use href="#i-check"/></svg>Enrollment complete</span>
+          <h2>You&rsquo;re enrolled for 1st Semester</h2>
+          <p><span class="js-enr-count">5</span> courses, <span class="js-enr-units">15</span> units. Your study load has been sent to your school email.</p>
+          <div class="hero-actions">
+            <a class="btn btn-gold btn-lg" href="#advise"><span>View study load</span><svg class="ic"><use href="#i-arrow"/></svg></a>
           </div>
         </div>
+      </div>
 
-        <div class="channel-list">
-          <h3>Accepted channels</h3>
-          <div class="channel-item">
-            <div>
-              <div class="cn">Over the counter</div>
-              <div class="cc">Business Office, ground floor</div>
-            </div>
-          </div>
-          <div class="channel-item">
-            <div>
-              <div class="cn">Bank deposit</div>
-              <div class="cc">BDO, BPI partner branches</div>
-            </div>
-          </div>
-          <div class="channel-item">
-            <div>
-              <div class="cn">Online payment gateway</div>
-              <div class="cc">Dragonpay, GCash</div>
-            </div>
-          </div>
+      <a class="alert js-full-alert" href="#advise">
+        <svg class="ic"><use href="#i-alert"/></svg>
+        <span><b>CIS 2105 Networking II is full.</b> <span class="js-full-msg">Join the waitlist so you&rsquo;re added if a seat opens. Your other 5 courses can still be enrolled now.</span></span>
+        <svg class="ic ic-end"><use href="#i-arrow"/></svg>
+      </a>
+
+      <div class="dash-grid">
+        <div class="card">
+          <h3 class="card-h">Your progress</h3>
+          <ol class="checklist js-steps">
+            <li class="done"><span class="ck"><svg class="ic"><use href="#i-check"/></svg></span><div><b>Downpayment paid</b><span>&#8369;3,000.00 &middot; Jul 20</span></div></li>
+            <li class="done"><span class="ck"><svg class="ic"><use href="#i-check"/></svg></span><div><b>Slot confirmed</b><span>Today, 9:42 AM</span></div></li>
+            <li class="current" data-step="enroll"><span class="ck">3</span><div><b>Advise &amp; enroll</b><span class="js-step3">Open until 6:00 PM</span></div></li>
+            <li class="pending" data-step="complete"><span class="ck">4</span><div><b>Enrollment complete</b><span>Study load issued</span></div></li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <h3 class="card-h">Enrollment schedule</h3>
+          <ul class="sched">
+            <li><b>1st Year</b><span>Aug 4</span></li>
+            <li class="today"><b>2nd Year</b><span>Aug 5 &middot; Today</span></li>
+            <li><b>3rd Year</b><span>Aug 6</span></li>
+            <li><b>4th Year</b><span>Aug 7</span></li>
+            <li class="adj"><b>Adjustment period</b><span>Aug 10&ndash;14</span></li>
+          </ul>
+          <p class="card-foot">Each window runs 8:00 AM to 6:00 PM. Use the adjustment period to add, drop, or change sections.</p>
         </div>
       </div>
 
     </section>
 
     <!-- ADVISE AND ENROLL -->
-    <section class="page" id="page-advise">
+    <section class="page" id="page-advise" aria-labelledby="page-title">
 
-      <div class="stepper">
-        <div class="step done"><div class="num">01</div><div class="label">Downpayment paid</div></div>
-        <div class="step done"><div class="num">02</div><div class="label">Slot confirmed</div></div>
-        <div class="step current"><div class="num">03</div><div class="label">Advise and enroll</div></div>
-        <div class="step pending"><div class="num">04</div><div class="label">Enrollment complete</div></div>
+      <div class="advise-head">
+        <div class="term-pill">1st Semester &middot; A.Y. 2026&ndash;2027</div>
+        <div class="window-pill js-window-pill"><svg class="ic"><use href="#i-clock"/></svg><span>Window open &middot; <b class="js-countdown" role="timer">2:14:09</b> left</span></div>
       </div>
 
-      <div class="queue-banner">
-        <div class="ql">
-          <h3>You are in, enroll before your window closes</h3>
-          <p>2nd Year enrollment day, slot confirmed at 9:42 AM</p>
-        </div>
-        <div class="qr">
-          <div class="time">2:14:09</div>
-          <div class="tlabel">Time remaining in your window</div>
-        </div>
-      </div>
-
-      <div class="yearlevels">
-        <div class="yl"><div class="lvl">1st Year</div><div class="when">Aug 4, 8:00 AM - 6:00 PM</div></div>
-        <div class="yl today"><div class="lvl">2nd Year</div><div class="when">Aug 5, 8:00 AM - 6:00 PM</div></div>
-        <div class="yl"><div class="lvl">3rd Year</div><div class="when">Aug 6, 8:00 AM - 6:00 PM</div></div>
-        <div class="yl"><div class="lvl">4th Year</div><div class="when">Aug 7, 8:00 AM - 6:00 PM</div></div>
-      </div>
-
-      <div class="adjustment-note">
-        Adjustment period, all year levels: August 10 to 14, for schedule changes and add or drop requests.
-      </div>
-
-      <div class="advise-layout">
-        <div class="term-panel">
-          <h3>Select term and year</h3>
-          <div class="term-field">
-            <label for="acadperiod">Academic Period</label>
-            <select id="acadperiod">
-              <option>1st Semester</option>
-              <option>2nd Semester</option>
-            </select>
+      <div class="course-card">
+        <div class="cc-head">
+          <div>
+            <h3 class="js-cc-title">Advised courses</h3>
+            <p class="js-cc-sub">Picked by your adviser for your block section, IS-A. Uncheck anything you don&rsquo;t want to take.</p>
           </div>
-          <div class="term-field">
-            <label for="acadyear">Academic Year</label>
-            <select id="acadyear">
-              <option>2026</option>
-              <option>2027</option>
-            </select>
+        </div>
+        <table class="ctable">
+          <thead>
+            <tr>
+              <th class="c-sel"><span class="sr">Select</span></th>
+              <th>Course</th>
+              <th>Schedule</th>
+              <th>Faculty</th>
+              <th>Seats</th>
+              <th class="c-units">Units</th>
+            </tr>
+          </thead>
+          <tbody id="course-body"></tbody>
+        </table>
+        <p class="cc-foot">Need a different section? You can add, drop, or change sections during the adjustment period, Aug 10&ndash;14.</p>
+      </div>
+
+      <div class="enroll-bar" id="enroll-bar">
+        <div class="eb-info">
+          <b class="js-eb-title">5 courses &middot; 15 units</b>
+          <span class="js-eb-meta">No time conflicts</span>
+        </div>
+        <button class="btn btn-primary btn-lg js-enroll" type="button">Enroll 5 courses</button>
+      </div>
+
+    </section>
+
+    <!-- DOWNPAYMENT -->
+    <section class="page" id="page-downpayment" aria-labelledby="page-title">
+
+      <div class="dp-layout">
+        <div class="card dp-card">
+          <div class="dp-top">
+            <div>
+              <div class="dl">1st Semester downpayment</div>
+              <div class="dp-amount">&#8369;3,000.00</div>
+            </div>
+            <span class="badge badge-ok"><svg class="ic"><use href="#i-check"/></svg>Paid in full</span>
           </div>
-          <hr>
-          <button class="btn btn-primary" style="width:100%;">Search</button>
+          <dl class="dp-details">
+            <div><dt>Reference number</dt><dd class="mono">DP-2026-118273</dd></div>
+            <div><dt>Date paid</dt><dd>July 20, 2026</dd></div>
+            <div><dt>Payment channel</dt><dd>Over the counter, Business Office</dd></div>
+            <div><dt>Applies to</dt><dd>Your 1st Semester enrollment slot</dd></div>
+          </dl>
+          <div class="dp-actions">
+            <button class="btn btn-ghost" type="button">Download receipt</button>
+          </div>
         </div>
 
-        <div class="course-table-wrap">
-          <table class="course-table">
-            <thead>
-              <tr>
-                <th>Group #</th>
-                <th>Course Code</th>
-                <th>Schedule</th>
-                <th>Faculty</th>
-                <th>Units</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-
-              <tr class="group-header-row">
-                <td colspan="6">CIS, Computer Information Systems</td>
-              </tr>
-
-              <tr class="crow" data-row="1">
-                <td><div class="grp-cell"><span class="grp-icon"><span></span><span></span><span></span></span>3</div></td>
-                <td class="course-code-cell">CIS 2101</td>
-                <td>M W 10:00 AM - 12:30 PM LB446 TC</td>
-                <td>SABANDAL, GRAN GAPASIN</td>
-                <td>3.00</td>
-                <td class="status-cell block">BLOCKSECTION</td>
-              </tr>
-              <tr class="detail-row" id="detail-1">
-                <td colspan="6">
-                  <div class="detail-inner-table">
-                    <div class="detail-block">
-                      <div class="dl">Availability</div>
-                      <div class="dv">22 of 30 enrolled</div>
-                      <div class="bar-track"><div class="bar-fill" style="width:73%;"></div></div>
-                    </div>
-                    <div class="detail-block">
-                      <div class="dl">Room</div>
-                      <div class="dv">LB446 TC</div>
-                    </div>
-                    <div class="detail-actions">
-                      <button class="btn btn-ghost">Remove</button>
-                      <button class="btn btn-primary">Enroll this course</button>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-
-              <tr class="crow" data-row="2">
-                <td><div class="grp-cell"><span class="grp-icon"><span></span><span></span><span></span></span>1</div></td>
-                <td class="course-code-cell">CIS 2102</td>
-                <td>T Th 03:00 PM - 05:30 PM LB446 TC</td>
-                <td>BELARMINO, CHRIS RAY BOHOLST</td>
-                <td>3.00</td>
-                <td class="status-cell block">BLOCKSECTION</td>
-              </tr>
-              <tr class="detail-row" id="detail-2">
-                <td colspan="6">
-                  <div class="detail-inner-table">
-                    <div class="detail-block">
-                      <div class="dl">Availability</div>
-                      <div class="dv">18 of 25 enrolled</div>
-                      <div class="bar-track"><div class="bar-fill" style="width:72%;"></div></div>
-                    </div>
-                    <div class="detail-block">
-                      <div class="dl">Room</div>
-                      <div class="dv">LB446 TC</div>
-                    </div>
-                    <div class="detail-actions">
-                      <button class="btn btn-ghost">Remove</button>
-                      <button class="btn btn-primary">Enroll this course</button>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-
-              <tr class="crow" data-row="3">
-                <td><div class="grp-cell"><span class="grp-icon"><span></span><span></span><span></span></span>2</div></td>
-                <td class="course-code-cell">CIS 2103</td>
-                <td>M W 03:00 PM - 05:30 PM LB467 TC</td>
-                <td>SABANDAL, GRAN GAPASIN ENRIQUEZ, KIRSTINE MAE NASTOR</td>
-                <td>3.00</td>
-                <td class="status-cell block">BLOCKSECTION</td>
-              </tr>
-              <tr class="detail-row" id="detail-3">
-                <td colspan="6">
-                  <div class="detail-inner-table">
-                    <div class="detail-block">
-                      <div class="dl">Availability</div>
-                      <div class="dv">9 of 30 enrolled</div>
-                      <div class="bar-track"><div class="bar-fill" style="width:30%;"></div></div>
-                    </div>
-                    <div class="detail-block">
-                      <div class="dl">Room</div>
-                      <div class="dv">LB467 TC</div>
-                    </div>
-                    <div class="detail-actions">
-                      <button class="btn btn-ghost">Remove</button>
-                      <button class="btn btn-primary">Enroll this course</button>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-
-              <tr class="crow" data-row="4">
-                <td><div class="grp-cell"><span class="grp-icon"><span></span><span></span><span></span></span>3</div></td>
-                <td class="course-code-cell">CIS 2105</td>
-                <td>M W 12:30 PM - 03:00 PM LB470 TC</td>
-                <td>SEBIAL, ARCHIVAL JUBAY</td>
-                <td>3.00</td>
-                <td class="status-cell block">BLOCKSECTION</td>
-              </tr>
-              <tr class="detail-row" id="detail-4">
-                <td colspan="6">
-                  <div class="detail-inner-table">
-                    <div class="detail-block">
-                      <div class="dl">Availability</div>
-                      <div class="dv">Full, no slots left</div>
-                      <div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--rust);"></div></div>
-                    </div>
-                    <div class="detail-block">
-                      <div class="dl">Room</div>
-                      <div class="dv">LB470 TC</div>
-                    </div>
-                    <div class="detail-actions">
-                      <button class="btn btn-ghost">Remove</button>
-                      <button class="btn btn-primary" disabled style="opacity:.45;cursor:not-allowed;">Section full</button>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-
-              <tr class="group-header-row">
-                <td colspan="6">IS, Information Systems</td>
-              </tr>
-
-              <tr class="crow" data-row="5">
-                <td><div class="grp-cell"><span class="grp-icon"><span></span><span></span><span></span></span>1</div></td>
-                <td class="course-code-cell">IS 3103</td>
-                <td>T Th 10:00 AM - 12:30 PM LB468 TC</td>
-                <td>TONGCO, RANNZEL DWAYNE MONTECILLO</td>
-                <td>3.00</td>
-                <td class="status-cell block">BLOCKSECTION</td>
-              </tr>
-              <tr class="detail-row" id="detail-5">
-                <td colspan="6">
-                  <div class="detail-inner-table">
-                    <div class="detail-block">
-                      <div class="dl">Availability</div>
-                      <div class="dv">14 of 25 enrolled</div>
-                      <div class="bar-track"><div class="bar-fill" style="width:56%;"></div></div>
-                    </div>
-                    <div class="detail-block">
-                      <div class="dl">Room</div>
-                      <div class="dv">LB468 TC</div>
-                    </div>
-                    <div class="detail-actions">
-                      <button class="btn btn-ghost">Remove</button>
-                      <button class="btn btn-primary">Enroll this course</button>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-
-              <tr class="crow" data-row="6">
-                <td><div class="grp-cell"><span class="grp-icon"><span></span><span></span><span></span></span>1</div></td>
-                <td class="course-code-cell">IS 4103</td>
-                <td>F 10:30 AM - 01:30 PM LB486 TC</td>
-                <td>SIONZON, MARIAN CONCEPCION REMULTA</td>
-                <td>3.00</td>
-                <td class="status-cell regular">REGULAR</td>
-              </tr>
-              <tr class="detail-row" id="detail-6">
-                <td colspan="6">
-                  <div class="detail-inner-table">
-                    <div class="detail-block">
-                      <div class="dl">Availability</div>
-                      <div class="dv">30 of 40 enrolled</div>
-                      <div class="bar-track"><div class="bar-fill" style="width:75%;"></div></div>
-                    </div>
-                    <div class="detail-block">
-                      <div class="dl">Room</div>
-                      <div class="dv">LB486 TC</div>
-                    </div>
-                    <div class="detail-actions">
-                      <button class="btn btn-ghost">Remove</button>
-                      <button class="btn btn-primary">Enroll this course</button>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-
-            </tbody>
-          </table>
-          <div class="table-total">18.00 Units / Total Units: <b>18.00</b></div>
+        <div class="card channel-list">
+          <h3 class="card-h">For future payments</h3>
+          <div class="channel-item"><b>Over the counter</b><span>Business Office, ground floor</span></div>
+          <div class="channel-item"><b>Bank deposit</b><span>BDO and BPI partner branches</span></div>
+          <div class="channel-item"><b>Online</b><span>Dragonpay or GCash</span></div>
         </div>
-      </div>
-
-      <div class="tabs" style="margin-top:28px;">
-        <button class="tab active" data-tab="advised">Advised Courses <span class="count">6</span></button>
-        <button class="tab" data-tab="enrolled">Enrolled Courses <span class="count">0</span></button>
-      </div>
-
-      <div class="panel active" id="panel-advised">
-        <div class="empty">Click a row above to view availability and enroll in that course.</div>
-      </div>
-
-      <div class="panel" id="panel-enrolled">
-        <div class="empty">Courses you enroll from the Advised tab will appear here.</div>
       </div>
 
     </section>
 
     <!-- COURSE HISTORY -->
-    <section class="page" id="page-history">
+    <section class="page" id="page-history" aria-labelledby="page-title">
 
       <h2 class="hist-degree">Bachelor of Science in Information Systems</h2>
 
-      <div class="hist-term">
-        <h3>Second Year, 1st Semester</h3>
+      <div class="card hist-term is-current">
+        <h3>Second Year, 1st Semester <span class="tag tag-gold">This term</span></h3>
         <table class="hist-table">
-          <thead><tr><th>Course Code</th><th>Course Description</th><th>Units</th></tr></thead>
+          <thead><tr><th>Course code</th><th>Description</th><th>Units</th></tr></thead>
           <tbody>
             <tr><td class="hist-code">IS 3103</td><td>Application Development and Emerging Technologies</td><td>3.0</td></tr>
             <tr><td class="hist-code">IS 4103</td><td>Evaluation of Business Performance</td><td>3.0</td></tr>
@@ -408,10 +215,10 @@
         <div class="hist-total">Total Units Remaining: <b>18.0 / 26.0</b></div>
       </div>
 
-      <div class="hist-term">
+      <div class="card hist-term">
         <h3>Second Year, 2nd Semester</h3>
         <table class="hist-table">
-          <thead><tr><th>Course Code</th><th>Course Description</th><th>Units</th></tr></thead>
+          <thead><tr><th>Course code</th><th>Description</th><th>Units</th></tr></thead>
           <tbody>
             <tr><td class="hist-code">GE-LWR</td><td>Rizal, Life and Works</td><td>3.0</td></tr>
             <tr><td class="hist-code">GE-FREELEC 3</td><td>General Education Free Electives 3</td><td>3.0</td></tr>
@@ -427,10 +234,10 @@
         <div class="hist-total">Total Units Remaining: <b>27.0 / 29.0</b></div>
       </div>
 
-      <div class="hist-term">
+      <div class="card hist-term">
         <h3>Second Year, Summer</h3>
         <table class="hist-table">
-          <thead><tr><th>Course Code</th><th>Course Description</th><th>Units</th></tr></thead>
+          <thead><tr><th>Course code</th><th>Description</th><th>Units</th></tr></thead>
           <tbody>
             <tr><td class="hist-code">IS 3107</td><td>Organization and Management Concepts</td><td>3.0</td></tr>
             <tr><td class="hist-code">IS 3105</td><td>Enterprise Architecture</td><td>3.0</td></tr>
@@ -440,10 +247,10 @@
         <div class="hist-total">Total Units Remaining: <b>9.0 / 9.0</b></div>
       </div>
 
-      <div class="hist-term">
+      <div class="card hist-term">
         <h3>Third Year, 1st Semester</h3>
         <table class="hist-table">
-          <thead><tr><th>Course Code</th><th>Course Description</th><th>Units</th></tr></thead>
+          <thead><tr><th>Course code</th><th>Description</th><th>Units</th></tr></thead>
           <tbody>
             <tr><td class="hist-code">IS 3104</td><td>Collection Management of Information Resources</td><td>3.0</td></tr>
             <tr><td class="hist-code">IS FREE ELEC</td><td>IS Free Elective</td><td>3.0</td></tr>
@@ -456,10 +263,10 @@
         <div class="hist-total">Total Units Remaining: <b>18.0 / 24.0</b></div>
       </div>
 
-      <div class="hist-term">
+      <div class="card hist-term">
         <h3>Third Year, 2nd Semester</h3>
         <table class="hist-table">
-          <thead><tr><th>Course Code</th><th>Course Description</th><th>Units</th></tr></thead>
+          <thead><tr><th>Course code</th><th>Description</th><th>Units</th></tr></thead>
           <tbody>
             <tr><td class="hist-code">IS 3203</td><td>Information Resources and Services</td><td>3.0</td></tr>
             <tr><td class="hist-code">IS 4202</td><td>Practicum B</td><td>6.0</td></tr>
@@ -476,29 +283,20 @@
     </section>
 
     <footer class="mock-note">
-      Mock-up for QueuSC, CIS 2102 final project. Navigation and course rows are interactive; buttons are visual only.
+      Mock-up for QueuSC, CIS 2102 final project. Data is illustrative and enrollment is simulated in your browser.
+      <button class="linkish js-reset" type="button">Reset demo</button>
     </footer>
   </main>
 </div>
 
-<nav class="mobile-nav">
-  <a data-page="dashboard" class="active">
-    <span class="mnav-icon">&#9635;</span>
-    <span>Dashboard</span>
-  </a>
-  <a data-page="downpayment">
-    <span class="mnav-icon">&#8369;</span>
-    <span>Payment</span>
-  </a>
-  <a data-page="advise">
-    <span class="mnav-icon">&#9776;</span>
-    <span>Advise</span>
-  </a>
-  <a data-page="history">
-    <span class="mnav-icon">&#128218;</span>
-    <span>History</span>
-  </a>
+<nav class="mobile-nav" aria-label="Primary">
+  <a href="#dashboard" data-page="dashboard"><svg class="ic"><use href="#i-home"/></svg><span>Home</span></a>
+  <a href="#advise" data-page="advise"><svg class="ic"><use href="#i-list"/></svg><span>Enroll</span><span class="live-dot js-live"></span></a>
+  <a href="#downpayment" data-page="downpayment"><svg class="ic"><use href="#i-wallet"/></svg><span>Payment</span></a>
+  <a href="#history" data-page="history"><svg class="ic"><use href="#i-book"/></svg><span>History</span></a>
 </nav>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="js/app.js"></script>
 </body>
