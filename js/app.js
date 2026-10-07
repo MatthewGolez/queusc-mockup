@@ -1,6 +1,6 @@
 var titles = {
-    dashboard: ["Welcome back", "1st Semester enrollment, A.Y. 2026\u20132027"],
-    advise: ["Advise & Enroll", "Join a block or build your own schedule before your window closes."],
+    dashboard: ["Welcome back", "1st Semester enrollment, A.Y. 2026-2027"],
+    advise: ["Advise & Enroll", "Choose your courses, then pick your block or groups before your window closes."],
     studyload: ["Study Load", "Your official class schedule for 1st Semester."],
     downpayment: ["Downpayment", "Your payment for this semester\u2019s enrollment slot."],
     history: ["Course History", "Your full curriculum, term by term."]
@@ -57,7 +57,9 @@ var titles = {
 
   var state;
   function freshState(){
-    return { mode: null, block: null, groups: {}, enrolled: false, load: [], label: "" };
+    var advised = {};
+    courses.forEach(function(c){ advised[c.id] = true; });
+    return { step: "advise", advised: advised, mode: null, block: null, groups: {}, enrolled: false, load: [], label: "" };
   }
   state = freshState();
 
@@ -82,13 +84,17 @@ var titles = {
   function isFull(sec){ return sec.enrolled >= sec.cap; }
   function when(sec){ return sec.days.join(" ") + " " + fmtTime(sec.start) + "\u2013" + fmtTime(sec.end); }
 
+  function advisedCourses(){ return courses.filter(function(c){ return state.advised[c.id]; }); }
+  // Blocks run every course in the semester, so they're open only to students taking all of them.
+  function blockOpen(){ return advisedCourses().length === courses.length; }
+
   function picked(){
-    if (state.mode === "block" && state.block){
+    if (state.mode === "block" && state.block && blockOpen()){
       var picks = blocks[state.block].picks;
       return courses.map(function(c){ return section(c, picks[c.id]); });
     }
     if (state.mode === "custom"){
-      return courses.filter(function(c){ return state.groups[c.id]; })
+      return advisedCourses().filter(function(c){ return state.groups[c.id]; })
         .map(function(c){ return section(c, state.groups[c.id]); });
     }
     return [];
@@ -148,10 +154,10 @@ var titles = {
       clashWith[pair[1].id] = pair[0].code;
     });
 
-    document.getElementById("group-body").innerHTML = courses.map(function(c){
+    document.getElementById("group-body").innerHTML = advisedCourses().map(function(c){
       var n = state.groups[c.id];
       var sec = n ? section(c, n) : null;
-      var options = '<option value="">Not this term</option>' + c.groups.map(function(g){
+      var options = (n ? "" : '<option value="" selected disabled>Choose a group</option>') + c.groups.map(function(g){
         var s = section(c, g[0]), full = isFull(s);
         return '<option value="' + g[0] + '"' + (n === g[0] ? " selected" : "") + (full ? " disabled" : "") + ">" +
           "Group " + g[0] + " \u00b7 " + when(s) + (full ? " \u00b7 Full" : "") + "</option>";
@@ -183,6 +189,32 @@ var titles = {
 
   /* ---------- Summary, dashboard, enroll ---------- */
 
+  /* ---------- Step 1: advise ---------- */
+
+  function renderAdvise(){
+    document.getElementById("advise-list").innerHTML = courses.map(function(c){
+      return '<li><label class="advise-item"><input type="checkbox" data-advise="' + c.id + '"' + (state.advised[c.id] ? " checked" : "") + ">" +
+        '<span class="sl-swatch" style="background:' + c.color + '"></span>' +
+        '<span class="ai-text"><b>' + c.code + "</b><span>" + c.title + "</span></span>" +
+        '<span class="ai-units">' + c.units.toFixed(1) + " units</span></label></li>";
+    }).join("");
+  }
+
+  document.getElementById("advise-list").addEventListener("change", function(e){
+    var id = e.target.dataset.advise;
+    if (!id) return;
+    state.advised[id] = e.target.checked;
+    if (!e.target.checked) delete state.groups[id];
+    if (state.mode === "block" && !blockOpen()){ state.mode = null; state.block = null; }
+    render();
+  });
+
+  document.querySelector(".js-back").addEventListener("click", function(){
+    state.step = "advise";
+    render();
+    window.scrollTo(0, 0);
+  });
+
   function render(){
     var closed = windowEnd - Date.now() <= 0;
     var list = state.enrolled ? state.load : picked();
@@ -195,6 +227,24 @@ var titles = {
     document.querySelector(".js-advise-done").hidden = !state.enrolled;
     setText(".js-done-msg", state.label + " \u00b7 " + n + " courses, " + units + " units. Your study load has been sent to your school email.");
 
+    var advising = state.step === "advise";
+    var advised = advisedCourses();
+    var advisedUnits = sumUnits(advised);
+    document.querySelector(".js-advise-pane").hidden = !advising;
+    document.querySelector(".js-enroll-step").hidden = advising;
+    document.querySelector(".js-flow-advise").className = "js-flow-advise " + (advising ? "is-current" : "is-done");
+    document.querySelector(".js-flow-enroll").className = "js-flow-enroll " + (advising ? "" : "is-current");
+    document.querySelector(".js-flow-advise .fs-n").innerHTML = advising ? "1" : '<svg class="ic"><use href="#i-check"/></svg>';
+    if (advising) renderAdvise();
+    setText(".js-advised-summary", "Advised: " + advised.length + " courses \u00b7 " + advisedUnits + " units");
+
+    var blockRadio = document.querySelector('input[name="mode"][value="block"]');
+    blockRadio.disabled = !blockOpen();
+    blockRadio.closest(".mode-opt").classList.toggle("is-disabled", !blockOpen());
+    setText(".js-block-desc", blockOpen()
+      ? "Join Block A or Block B. Your whole schedule is fixed, and you take every class with the same blockmates."
+      : "Blocks take all " + courses.length + " courses together. Advise every course to join one.");
+
     $('input[name="mode"]').forEach(function(r){ r.checked = r.value === state.mode; });
     document.querySelector(".js-block-pane").hidden = state.mode !== "block";
     document.querySelector(".js-custom-pane").hidden = state.mode !== "custom";
@@ -202,26 +252,33 @@ var titles = {
     if (state.mode === "custom") renderGroups(list);
 
     var preview = document.querySelector(".js-preview");
-    preview.hidden = state.enrolled || !n;
+    preview.hidden = state.enrolled || advising || !n;
     if (!preview.hidden) renderTimetable(list, "preview-tt", "preview-agenda", clashes);
 
     var bar = document.getElementById("enroll-bar");
     var btn = document.querySelector(".js-enroll");
-    bar.hidden = !state.mode;
-    if (state.mode === "block"){
+    bar.hidden = !advising && !state.mode;
+    bar.classList.remove("has-conflict");
+    if (advising){
+      setText(".js-eb-title", advised.length + (advised.length === 1 ? " course" : " courses") + " \u00b7 " + advisedUnits + " units advised");
+      setText(".js-eb-meta", advised.length ? "Next, choose your block or groups" : "Select at least one course");
+      btn.textContent = "Continue to enroll";
+      btn.disabled = closed || !advised.length;
+    } else if (state.mode === "block"){
       setText(".js-eb-title", state.block ? "Block " + state.block + " \u00b7 " + n + " courses \u00b7 " + units + " units" : "No block selected");
       setText(".js-eb-meta", state.block ? "Fixed schedule \u00b7 no time conflicts" : "Pick Block A or Block B above");
       btn.textContent = closed ? "Window closed" : state.block ? "Enroll in Block " + state.block : "Enroll";
       btn.disabled = closed || !state.block;
       bar.classList.remove("has-conflict");
     } else if (state.mode === "custom"){
-      setText(".js-eb-title", "Non-block \u00b7 " + n + " of " + courses.length + " courses \u00b7 " + units + " units");
+      var missing = advised.length - n;
+      setText(".js-eb-title", "Non-block \u00b7 " + n + " of " + advised.length + " courses scheduled \u00b7 " + units + " units");
       setText(".js-eb-meta", clashes.length
         ? "Time conflict: " + clashes[0][0].code + " and " + clashes[0][1].code
-        : n ? "No time conflicts" : "Choose a group for each course you want to take");
+        : missing ? "Choose a group for " + missing + " more " + (missing === 1 ? "course" : "courses") : "No time conflicts");
       bar.classList.toggle("has-conflict", clashes.length > 0);
-      btn.textContent = closed ? "Window closed" : "Enroll " + n + (n === 1 ? " course" : " courses");
-      btn.disabled = closed || !n || clashes.length > 0;
+      btn.textContent = closed ? "Window closed" : "Enroll " + advised.length + (advised.length === 1 ? " course" : " courses");
+      btn.disabled = closed || missing > 0 || clashes.length > 0;
     }
 
     // Dashboard
@@ -333,7 +390,15 @@ var titles = {
 
   document.querySelector(".js-enroll").addEventListener("click", function(){
     if (!checkSession()) return;
+    if (state.step === "advise"){
+      if (!advisedCourses().length) return;
+      state.step = "enroll";
+      render();
+      window.scrollTo(0, 0);
+      return;
+    }
     var list = picked();
+    if (state.mode === "custom" && list.length < advisedCourses().length) return;
     if (!list.length || conflicts(list).length) return;
     var btn = this;
     btn.disabled = true;
@@ -371,7 +436,7 @@ var titles = {
     label.textContent = "Preparing PDF\u2026";
     loadJsPdf().then(function(){
       var doc = buildStudyLoadPdf(list, {
-        term: "1st Semester, A.Y. 2026\u20132027",
+        term: "1st Semester, A.Y. 2026-2027",
         student: QueuAuth.fullName(currentUser) + " \u00b7 " + currentUser.id + " \u00b7 " + QueuAuth.program,
         section: state.label,
         generated: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
