@@ -79,7 +79,7 @@ var QueuAuth = (function(){
 
     return {
       users: users,
-      program: "BS Information Systems · 2nd Year, IS-A",
+      program: "BS Information Systems · 2nd Year",
       current: current,
       signIn: signIn,
       signOut: signOut,

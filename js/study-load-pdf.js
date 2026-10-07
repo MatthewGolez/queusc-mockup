@@ -28,7 +28,7 @@ function buildStudyLoadPdf(courses, opts){
     doc.setTextColor(MUTED).setFontSize(8.5);
     doc.text("QueuSC", pageW - mx, y, { align: "right" });
     doc.text("Generated " + opts.generated, pageW - mx, y + 6, { align: "right" });
-    doc.text(courses.length + " courses, " + opts.units.toFixed(1) + " units", pageW - mx, y + 11, { align: "right" });
+    doc.text(opts.section + " \u00b7 " + courses.length + " courses, " + opts.units.toFixed(1) + " units", pageW - mx, y + 11, { align: "right" });
 
     /* Timetable */
     var days = DAYS.filter(function(d, i){
@@ -79,7 +79,7 @@ function buildStudyLoadPdf(courses, opts){
 
     /* Course list */
     var ty = gy + headH + slots * rowH + 10;
-    var cols = [["Course code", 26], ["Description", 78], ["Schedule", 52], ["Room", 22], ["Faculty", 75], ["Units", 20]];
+    var cols = [["Course code", 24], ["Group", 14], ["Description", 72], ["Schedule", 50], ["Room", 20], ["Faculty", 73], ["Units", 20]];
     var listW = pageW - 2 * mx, lineH = 6;
     var scale = listW / cols.reduce(function(sum, col){ return sum + col[1]; }, 0);
 
@@ -100,7 +100,7 @@ function buildStudyLoadPdf(courses, opts){
     row(cols.map(function(col){ return col[0]; }), ty, true, "#EEEEEE");
     courses.forEach(function(c, i){
       var rowY = ty + lineH * (i + 1);
-      row([c.code, c.title, c.days.join(" ") + " " + clock(toMin(c.start)) + " - " + clock(toMin(c.end)), room(c), c.faculty, c.units.toFixed(1)], rowY, false);
+      row([c.code, String(c.group), c.title, c.days.join(" ") + " " + clock(toMin(c.start)) + " - " + clock(toMin(c.end)), room(c), c.faculty, c.units.toFixed(1)], rowY, false);
     });
     var endY = ty + lineH * (courses.length + 1);
     doc.setFont("helvetica", "bold");
@@ -108,10 +108,7 @@ function buildStudyLoadPdf(courses, opts){
 
     /* Footer */
     doc.setFont("helvetica", "normal").setFontSize(7.5).setTextColor(MUTED);
-    var notes = [];
-    if (opts.waitlisted.length) notes.push("Waitlisted, not on this schedule: " + opts.waitlisted.join(", ") + ".");
-    notes.push("Mock-up for QueuSC, CIS 2102 final project. Data is illustrative.");
-    doc.text(notes.join("  "), mx, pageH - 8);
+    doc.text("Mock-up for QueuSC, CIS 2102 final project. Data is illustrative.", mx, pageH - 8);
 
     return doc;
   }

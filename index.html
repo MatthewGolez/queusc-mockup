@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0F3324">
 <title>QueuSC Enrollment</title>
-<script src="js/auth.js?v=5"></script>
+<script src="js/auth.js?v=6"></script>
 <script>QueuAuth.requireUser();</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=5">
+<link rel="stylesheet" href="css/style.css?v=6">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -63,7 +63,7 @@
         <div class="avatar js-avatar" aria-hidden="true"></div>
         <div class="who">
           <b class="js-user-name"></b>
-          <span>BS Information Systems &middot; 2nd Year, IS-A</span>
+          <span>BS Information Systems &middot; 2nd Year</span>
         </div>
       </div>
     </header>
@@ -75,9 +75,9 @@
         <div class="hero-main">
           <span class="eyebrow"><span class="pulse"></span>Your enrollment window is open</span>
           <h2>Enroll before <span class="nowrap">6:00 PM today</span></h2>
-          <p>Your adviser has already picked your courses. Review them and confirm. It takes about a minute.</p>
+          <p>Join Block A or B for a fixed schedule, or build your own by picking a group for each course.</p>
           <div class="hero-actions">
-            <a class="btn btn-gold btn-lg" href="#advise"><span>Review &amp; enroll <span class="js-sel-units">15</span> units</span><svg class="ic"><use href="#i-arrow"/></svg></a>
+            <a class="btn btn-gold btn-lg" href="#advise"><span>Choose my schedule</span><svg class="ic"><use href="#i-arrow"/></svg></a>
           </div>
         </div>
         <div class="hero-timer">
@@ -90,18 +90,13 @@
         <div class="hero-main">
           <span class="eyebrow"><svg class="ic"><use href="#i-check"/></svg>Enrollment complete</span>
           <h2>You&rsquo;re enrolled for 1st Semester</h2>
-          <p><span class="js-enr-count">5</span> courses, <span class="js-enr-units">15</span> units. Your study load has been sent to your school email.</p>
+          <p><span class="js-enr-section"></span> &middot; <span class="js-enr-count"></span> courses, <span class="js-enr-units"></span> units. Your study load has been sent to your school email.</p>
           <div class="hero-actions">
             <a class="btn btn-gold btn-lg" href="#studyload"><span>View study load</span><svg class="ic"><use href="#i-arrow"/></svg></a>
           </div>
         </div>
       </div>
 
-      <a class="alert js-full-alert" href="#advise">
-        <svg class="ic"><use href="#i-alert"/></svg>
-        <span><b>CIS 2105 Networking II is full.</b> <span class="js-full-msg">Join the waitlist so you&rsquo;re added if a seat opens. Your other 5 courses can still be enrolled now.</span></span>
-        <svg class="ic ic-end"><use href="#i-arrow"/></svg>
-      </a>
 
       <div class="dash-grid">
         <div class="card">
@@ -137,35 +132,74 @@
         <div class="window-pill js-window-pill"><svg class="ic"><use href="#i-clock"/></svg><span>Window open &middot; <b class="js-countdown" role="timer">2:14:09</b> left</span></div>
       </div>
 
-      <div class="course-card">
-        <div class="cc-head">
-          <div>
-            <h3 class="js-cc-title">Advised courses</h3>
-            <p class="js-cc-sub">Picked by your adviser for your block section, IS-A. Uncheck anything you don&rsquo;t want to take.</p>
+      <div class="js-advise-open">
+        <fieldset class="mode-pick">
+          <legend class="sr">How do you want to enroll?</legend>
+          <label class="mode-opt">
+            <input type="radio" name="mode" value="block">
+            <span class="mo-body">
+              <b>Block section</b>
+              <span>Join Block A or Block B. Your whole schedule is fixed, and you take every class with the same blockmates.</span>
+            </span>
+          </label>
+          <label class="mode-opt">
+            <input type="radio" name="mode" value="custom">
+            <span class="mo-body">
+              <b>Build my own</b>
+              <span>Non-block. Pick a group for each course and arrange a schedule that works for you.</span>
+            </span>
+          </label>
+        </fieldset>
+
+        <div class="course-card js-block-pane" hidden>
+          <div class="cc-head">
+            <h3>Choose your block</h3>
+            <p>Each block has a fixed schedule. Seats are reserved for the whole block, so you get every class.</p>
           </div>
+          <div class="blocks" id="blocks"></div>
         </div>
-        <table class="ctable">
-          <thead>
-            <tr>
-              <th class="c-sel"><span class="sr">Select</span></th>
-              <th>Course</th>
-              <th>Schedule</th>
-              <th>Faculty</th>
-              <th>Seats</th>
-              <th class="c-units">Units</th>
-            </tr>
-          </thead>
-          <tbody id="course-body"></tbody>
-        </table>
-        <p class="cc-foot">Need a different section? You can add, drop, or change sections during the adjustment period, Aug 10&ndash;14.</p>
+
+        <div class="course-card js-custom-pane" hidden>
+          <div class="cc-head">
+            <h3>Choose a group for each course</h3>
+            <p>Every course has 5 groups with different schedules. Set a course to &ldquo;Not this term&rdquo; to skip it.</p>
+          </div>
+          <table class="ctable gtable">
+            <thead>
+              <tr>
+                <th>Course</th>
+                <th>Group &amp; schedule</th>
+                <th>Room &amp; faculty</th>
+                <th>Seats</th>
+                <th class="c-units">Units</th>
+              </tr>
+            </thead>
+            <tbody id="group-body"></tbody>
+          </table>
+          <p class="cc-foot">Changed your mind later? You can add, drop, or change groups during the adjustment period, Aug 10&ndash;14.</p>
+        </div>
+
+        <div class="card sl-card js-preview" hidden>
+          <h3 class="card-h">Schedule preview</h3>
+          <div class="tt" id="preview-tt"></div>
+          <div class="agenda" id="preview-agenda"></div>
+        </div>
+
+        <div class="enroll-bar" id="enroll-bar" hidden>
+          <div class="eb-info">
+            <b class="js-eb-title"></b>
+            <span class="js-eb-meta"></span>
+          </div>
+          <button class="btn btn-primary btn-lg js-enroll" type="button">Enroll</button>
+        </div>
       </div>
 
-      <div class="enroll-bar" id="enroll-bar">
-        <div class="eb-info">
-          <b class="js-eb-title">5 courses &middot; 15 units</b>
-          <span class="js-eb-meta">No time conflicts</span>
-        </div>
-        <button class="btn btn-primary btn-lg js-enroll" type="button">Enroll 5 courses</button>
+      <div class="card sl-empty js-advise-done" hidden>
+        <span class="done-ic"><svg class="ic"><use href="#i-check"/></svg></span>
+        <h3>You&rsquo;re enrolled</h3>
+        <p class="js-done-msg"></p>
+        <a class="btn btn-primary" href="#studyload"><span>View study load</span><svg class="ic"><use href="#i-arrow"/></svg></a>
+        <p class="done-foot">Need changes? Add, drop, or change groups during the adjustment period, Aug 10&ndash;14.</p>
       </div>
 
     </section>
@@ -185,6 +219,7 @@
           <div class="sl-meta">
             <span class="badge badge-ok"><svg class="ic"><use href="#i-check"/></svg>Enrolled</span>
             <span>1st Semester &middot; A.Y. 2026&ndash;2027</span>
+            <span class="js-sl-section"></span>
             <span class="js-sl-summary">5 courses &middot; 15 units</span>
           </div>
           <button class="btn btn-primary js-download" type="button"><svg class="ic"><use href="#i-download"/></svg><span>Download PDF</span></button>
@@ -205,7 +240,6 @@
           <div class="hist-total">Total units: <b class="js-sl-units">15.0</b></div>
         </div>
 
-        <p class="sl-note js-sl-note" hidden></p>
       </div>
 
     </section>
@@ -348,7 +382,7 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="js/study-load-pdf.js?v=5"></script>
-<script src="js/app.js?v=5"></script>
+<script src="js/study-load-pdf.js?v=6"></script>
+<script src="js/app.js?v=6"></script>
 </body>
 </html>
