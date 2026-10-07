@@ -69,13 +69,16 @@ var titles = {
   }
   function sectionLabel(){ return state.mode === "block" ? "Block " + state.block : "Non-block"; }
 
+  function overlaps(a, b){
+    var sharedDay = a.days.some(function(d){ return b.days.indexOf(d) > -1; });
+    return sharedDay && toMin(a.start) < toMin(b.end) && toMin(b.start) < toMin(a.end);
+  }
+
   function conflicts(list){
     var hits = [];
     for (var i = 0; i < list.length; i++){
       for (var j = i + 1; j < list.length; j++){
-        var a = list[i], b = list[j];
-        var sharedDay = a.days.some(function(d){ return b.days.indexOf(d) > -1; });
-        if (sharedDay && toMin(a.start) < toMin(b.end) && toMin(b.start) < toMin(a.end)) hits.push([a, b]);
+        if (overlaps(list[i], list[j])) hits.push([list[i], list[j]]);
       }
     }
     return hits;
@@ -125,17 +128,25 @@ var titles = {
     document.getElementById("group-body").innerHTML = advisedCourses().map(function(c){
       var n = state.groups[c.id];
       var sec = n ? section(c, n) : null;
-      var options = (n ? "" : '<option value="" selected disabled>Choose a group</option>') + c.groups.map(function(g){
+      // Grey out groups that are full or overlap a group already picked for another course.
+      var others = list.filter(function(o){ return o.id !== c.id; });
+      var open = 0;
+      var options = '<option value=""' + (n ? "" : " selected") + ">Choose a group</option>" + c.groups.map(function(g){
         var s = section(c, g[0]), full = isFull(s);
-        return '<option value="' + g[0] + '"' + (n === g[0] ? " selected" : "") + (full ? " disabled" : "") + ">" +
-          "Group " + g[0] + " \u00b7 " + when(s) + (full ? " \u00b7 Full" : "") + "</option>";
+        var hit = others.filter(function(o){ return overlaps(s, o); })[0];
+        var blocked = full || !!hit;
+        if (!blocked) open++;
+        return '<option value="' + g[0] + '"' + (n === g[0] ? " selected" : "") + (blocked && n !== g[0] ? " disabled" : "") + ">" +
+          "Group " + g[0] + " \u00b7 " + when(s) + (full ? " \u00b7 Full" : hit ? " \u00b7 Overlaps " + hit.code : "") + "</option>";
       }).join("");
       var clash = sec && clashWith[c.id];
+      var stuck = !sec && !open;
 
       return '<tr class="grow' + (clash ? " has-clash" : "") + (sec ? "" : " is-skipped") + '">' +
         '<td class="g-course"><span class="code">' + c.code + '</span><span class="ctitle">' + c.title + "</span></td>" +
         '<td class="g-pick"><select data-course="' + c.id + '" aria-label="Group for ' + c.code + '">' + options + "</select>" +
-          (clash ? '<span class="clash-msg">Overlaps with ' + clash + "</span>" : "") + "</td>" +
+          (clash ? '<span class="clash-msg">Overlaps with ' + clash + "</span>" : "") +
+          (stuck ? '<span class="clash-msg">Every open group overlaps your other picks. Change another course\u2019s group.</span>' : "") + "</td>" +
         '<td class="g-fac">' + (sec ? sec.room + '<span class="room">' + sec.faculty + "</span>" : '<span class="room">&mdash;</span>') + "</td>" +
         '<td class="c-seats">' + (sec ? seatsHtml(sec.enrolled, sec.cap) : "") + "</td>" +
         '<td class="c-units">' + (sec ? c.units.toFixed(1) : "&ndash;") + "</td></tr>";
