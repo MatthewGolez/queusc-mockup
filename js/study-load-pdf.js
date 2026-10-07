@@ -28,7 +28,7 @@ function buildStudyLoadPdf(courses, opts){
     doc.setTextColor(MUTED).setFontSize(8.5);
     doc.text("QueuSC", pageW - mx, y, { align: "right" });
     doc.text("Generated " + opts.generated, pageW - mx, y + 6, { align: "right" });
-    doc.text(opts.section + " \u00b7 " + courses.length + " courses, " + opts.units.toFixed(1) + " units", pageW - mx, y + 11, { align: "right" });
+    doc.text(opts.section + ": " + courses.length + " courses, " + opts.units.toFixed(1) + " units", pageW - mx, y + 11, { align: "right" });
 
     /* Timetable */
     var days = DAYS.filter(function(d, i){

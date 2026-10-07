@@ -104,7 +104,7 @@ var QueuCurriculum = (function(){
       [5, "F", "07:30", "12:30", "LB450 TC", "Tongco, Rannzel Dwayne M.", 6, 25] ],
       cis2103: [
       [1, "T Th", "07:30", "10:00", "LB467 TC", "Enriquez, Kirstine Mae N.", 25, 30],
-      [2, "M W", "15:00", "17:30", "LB467 TC", "Sabandal, Gran G. \u00b7 Enriquez, Kirstine Mae N.", 9, 30],
+      [2, "M W", "15:00", "17:30", "LB467 TC", "Sabandal, Gran G. / Enriquez, Kirstine Mae N.", 9, 30],
       [3, "M W", "10:00", "12:30", "LB468 TC", "Enriquez, Kirstine Mae N.", 30, 30],
       [4, "T Th", "15:00", "17:30", "LB467 TC", "Sabandal, Gran G.", 17, 30],
       [5, "T Th", "12:30", "15:00", "LB469 TC", "Enriquez, Kirstine Mae N.", 11, 30] ],

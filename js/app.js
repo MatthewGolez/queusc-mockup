@@ -106,7 +106,7 @@ var titles = {
           return '<span class="bo-row"><span class="sl-swatch" style="background:' + sec.color + '"></span>' +
             "<b>" + sec.code + "</b><span>G" + sec.group + "</span><span>" + when(sec) + "</span></span>";
         }).join("") + "</span>" +
-        '<span class="bo-foot">' + list.length + " courses &middot; " + sumUnits(list) + " units</span></label>";
+        '<span class="bo-foot">' + list.length + " courses, " + sumUnits(list) + " units</span></label>";
     }).join("");
   }
 
@@ -137,7 +137,7 @@ var titles = {
         var blocked = full || !!hit;
         if (!blocked) open++;
         return '<option value="' + g[0] + '"' + (n === g[0] ? " selected" : "") + (blocked && n !== g[0] ? " disabled" : "") + ">" +
-          "Group " + g[0] + " \u00b7 " + when(s) + (full ? " \u00b7 Full" : hit ? " \u00b7 Overlaps " + hit.code : "") + "</option>";
+          "Group " + g[0] + ": " + when(s) + (full ? " (Full)" : hit ? " (overlaps " + hit.code + ")" : "") + "</option>";
       }).join("");
       var clash = sec && clashWith[c.id];
       var stuck = !sec && !open;
@@ -206,7 +206,7 @@ var titles = {
     return '<li><label class="advise-item"><input type="checkbox" data-advise="' + c.id + '"' + (state.advised[c.id] ? " checked" : "") + ">" +
       '<span class="sl-swatch" style="background:' + c.color + '"></span>' +
       '<span class="ai-text"><b>' + c.code + "</b><span>" + c.title + "</span>" +
-      (c.status === "available" ? '<span class="ai-from">' + c.termName + (c.req ? " \u00b7 " + QueuCurriculum.reqText(c.req) : "") + "</span>" : "") + "</span>" +
+      (c.status === "available" ? '<span class="ai-from">' + c.termName + (c.req ? ". " + QueuCurriculum.reqText(c.req) : "") + "</span>" : "") + "</span>" +
       '<span class="ai-units">' + c.units.toFixed(1) + " units</span></label></li>";
   }
 
@@ -250,7 +250,7 @@ var titles = {
     // Advise & Enroll
     document.querySelector(".js-advise-open").hidden = state.enrolled;
     document.querySelector(".js-advise-done").hidden = !state.enrolled;
-    setText(".js-done-msg", state.label + " \u00b7 " + n + " courses, " + units + " units. Your study load has been sent to your school email.");
+    setText(".js-done-msg", state.label + ": " + n + " courses, " + units + " units. Your study load has been sent to your school email.");
 
     var advising = state.step === "advise";
     var advised = advisedCourses();
@@ -261,7 +261,7 @@ var titles = {
     document.querySelector(".js-flow-enroll").className = "js-flow-enroll " + (advising ? "" : "is-current");
     document.querySelector(".js-flow-advise .fs-n").innerHTML = advising ? "1" : '<svg class="ic"><use href="#i-check"/></svg>';
     if (advising) renderAdvise();
-    setText(".js-advised-summary", "Advised: " + advised.length + " courses \u00b7 " + advisedUnits + " units");
+    setText(".js-advised-summary", "Advised: " + advised.length + " courses, " + advisedUnits + " units");
 
     var blockRadio = document.querySelector('input[name="mode"][value="block"]');
     blockRadio.disabled = !blockOpen();
@@ -285,23 +285,23 @@ var titles = {
     bar.hidden = !advising && !state.mode;
     bar.classList.remove("has-conflict");
     if (advising){
-      setText(".js-eb-title", advised.length + (advised.length === 1 ? " course" : " courses") + " \u00b7 " + advisedUnits + " units advised");
+      setText(".js-eb-title", advised.length + (advised.length === 1 ? " course" : " courses") + ", " + advisedUnits + " units advised");
       var over = advisedUnits - MAX_UNITS;
       setText(".js-eb-meta", !advised.length ? "Select at least one course"
         : over > 0 ? "Over the " + MAX_UNITS + "-unit limit by " + over + (over === 1 ? " unit" : " units")
-        : "Next, choose your block or groups \u00b7 max " + MAX_UNITS + " units");
+        : "Next, choose your block or groups (max " + MAX_UNITS + " units)");
       bar.classList.toggle("has-conflict", over > 0);
       btn.textContent = "Continue to enroll";
       btn.disabled = closed || !advised.length || over > 0;
     } else if (state.mode === "block"){
-      setText(".js-eb-title", state.block ? "Block " + state.block + " \u00b7 " + n + " courses \u00b7 " + units + " units" : "No block selected");
-      setText(".js-eb-meta", state.block ? "Fixed schedule \u00b7 no time conflicts" : "Pick Block A or Block B above");
+      setText(".js-eb-title", state.block ? "Block " + state.block + ": " + n + " courses, " + units + " units" : "No block selected");
+      setText(".js-eb-meta", state.block ? "Fixed schedule, no time conflicts" : "Pick Block A or Block B above");
       btn.textContent = closed ? "Window closed" : state.block ? "Enroll in Block " + state.block : "Enroll";
       btn.disabled = closed || !state.block;
       bar.classList.remove("has-conflict");
     } else if (state.mode === "custom"){
       var missing = advised.length - n;
-      setText(".js-eb-title", "Non-block \u00b7 " + n + " of " + advised.length + " courses scheduled \u00b7 " + units + " units");
+      setText(".js-eb-title", "Non-block: " + n + " of " + advised.length + " courses scheduled, " + units + " units");
       setText(".js-eb-meta", clashes.length
         ? "Time conflict: " + clashes[0][0].code + " and " + clashes[0][1].code
         : missing ? "Choose a group for " + missing + " more " + (missing === 1 ? "course" : "courses") : "No time conflicts");
@@ -326,7 +326,7 @@ var titles = {
     [s3, s4].forEach(function(li, i){
       li.querySelector(".ck").innerHTML = state.enrolled ? '<svg class="ic"><use href="#i-check"/></svg>' : String(i + 3);
     });
-    setText(".js-step3", state.enrolled ? state.label + " \u00b7 " + n + " courses, " + units + " units" : "Open until 6:00 PM");
+    setText(".js-step3", state.enrolled ? state.label + ": " + n + " courses, " + units + " units" : "Open until 6:00 PM");
 
     renderStudyLoad();
     renderHistory();
@@ -389,7 +389,7 @@ var titles = {
       agenda += '<div class="ag-day"><h4>' + d[1] + "</h4>";
       todays.forEach(function(c){
         agenda += '<div class="ag-item' + (clashing[c.id] ? " is-clash" : "") + '" style="border-left-color:' + c.color + '"><span class="ag-time">' + fmtTime(c.start) + "&ndash;" + fmtTime(c.end) + "</span>" +
-          "<b>" + c.code + "</b> " + c.title + '<span class="ag-room">Group ' + c.group + " &middot; " + c.room + "</span></div>";
+          "<b>" + c.code + "</b> " + c.title + '<span class="ag-room">Group ' + c.group + ", " + c.room + "</span></div>";
       });
       agenda += "</div>";
     });
@@ -403,12 +403,12 @@ var titles = {
     if (!state.enrolled) return;
 
     setText(".js-sl-section", state.label);
-    setText(".js-sl-summary", list.length + " courses \u00b7 " + sumUnits(list) + " units");
+    setText(".js-sl-summary", list.length + " courses, " + sumUnits(list) + " units");
     setText(".js-sl-units", sumUnits(list).toFixed(1));
     renderTimetable(list, "timetable", "agenda");
 
     document.getElementById("sl-courses").innerHTML = list.map(function(c){
-      return '<tr><td><span class="sl-swatch" style="background:' + c.color + '"></span><span class="hist-code">' + c.code + "</span> &middot; Group " + c.group + "<br>" + c.title + "</td>" +
+      return '<tr><td><span class="sl-swatch" style="background:' + c.color + '"></span><span class="hist-code">' + c.code + "</span> (Group " + c.group + ")<br>" + c.title + "</td>" +
         "<td>" + when(c) + "</td>" +
         "<td>" + c.room + "</td><td>" + c.faculty + "</td><td>" + c.units.toFixed(1) + "</td></tr>";
     }).join("");
@@ -467,7 +467,7 @@ var titles = {
     loadJsPdf().then(function(){
       var doc = buildStudyLoadPdf(list, {
         term: "1st Semester, A.Y. 2026-2027",
-        student: QueuAuth.fullName(currentUser) + " \u00b7 " + currentUser.id + " \u00b7 " + QueuAuth.program,
+        student: QueuAuth.fullName(currentUser) + " (" + currentUser.id + "), " + QueuAuth.program,
         section: state.label,
         generated: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
         units: sumUnits(list)
