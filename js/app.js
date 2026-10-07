@@ -185,7 +185,7 @@ var titles = {
 
   document.querySelector(".js-enroll").addEventListener("click", function(){
     if (state.enrolled){
-      toast("Study load download is not part of this mock-up.");
+      downloadStudyLoad(this);
       return;
     }
     var btn = this;
@@ -198,6 +198,44 @@ var titles = {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }, 700);
   });
+
+  /* ---------- Study load PDF ---------- */
+
+  var jspdfReady;
+  function loadJsPdf(){
+    if (window.jspdf) return Promise.resolve();
+    jspdfReady = jspdfReady || new Promise(function(resolve, reject){
+      var s = document.createElement("script");
+      s.src = "js/vendor/jspdf.umd.min.js";
+      s.onload = resolve;
+      s.onerror = function(){ jspdfReady = null; reject(); };
+      document.head.appendChild(s);
+    });
+    return jspdfReady;
+  }
+
+  function downloadStudyLoad(btn){
+    var list = picked();
+    var label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Preparing PDF\u2026";
+    loadJsPdf().then(function(){
+      var doc = buildStudyLoadPdf(list, {
+        term: "1st Semester, A.Y. 2026\u20132027",
+        student: "Matthew G. \u00b7 BS Information Systems \u00b7 2nd Year, IS-A",
+        generated: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        units: list.reduce(function(s, c){ return s + c.units; }, 0),
+        waitlisted: courses.filter(function(c){ return state.waitlisted[c.id]; }).map(function(c){ return c.code; })
+      });
+      doc.save("QueuSC-Study-Load-1st-Sem-2026-2027.pdf");
+      toast("Study load downloaded.");
+    }).catch(function(){
+      toast("Couldn\u2019t load the PDF generator. Check your connection and try again.");
+    }).then(function(){
+      btn.disabled = false;
+      btn.textContent = label;
+    });
+  }
 
   document.querySelector(".js-reset").addEventListener("click", function(){
     state.enrolled = false;
