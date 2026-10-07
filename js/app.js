@@ -1,27 +1,28 @@
 var titles = {
     dashboard: ["Welcome back", "1st Semester enrollment, A.Y. 2026–2027"],
     advise: ["Advise & Enroll", "Confirm your advised courses before your window closes."],
+    studyload: ["Study Load", "Your official class schedule for 1st Semester."],
     downpayment: ["Downpayment", "Your payment for this semester’s enrollment slot."],
     history: ["Course History", "Your full curriculum, term by term."]
   };
 
   var courses = [
-    { id: "cis2101", code: "CIS 2101", title: "Data Structures and Algorithms", group: 3, type: "Block",
+    { id: "cis2101", code: "CIS 2101", color: "#E88080", title: "Data Structures and Algorithms", group: 3, type: "Block",
       days: ["M", "W"], start: "10:00", end: "12:30", room: "LB446 TC",
       faculty: "Sabandal, Gran G.", units: 3, enrolled: 22, cap: 30 },
-    { id: "cis2102", code: "CIS 2102", title: "Web Development II", group: 1, type: "Block",
+    { id: "cis2102", code: "CIS 2102", color: "#45B3AA", title: "Web Development II", group: 1, type: "Block",
       days: ["T", "Th"], start: "15:00", end: "17:30", room: "LB446 TC",
       faculty: "Belarmino, Chris Ray B.", units: 3, enrolled: 18, cap: 25 },
-    { id: "cis2103", code: "CIS 2103", title: "Object-Oriented Programming", group: 2, type: "Block",
+    { id: "cis2103", code: "CIS 2103", color: "#F4A07C", title: "Object-Oriented Programming", group: 2, type: "Block",
       days: ["M", "W"], start: "15:00", end: "17:30", room: "LB467 TC",
       faculty: "Sabandal, Gran G. · Enriquez, Kirstine Mae N.", units: 3, enrolled: 9, cap: 30 },
-    { id: "cis2105", code: "CIS 2105", title: "Networking II", group: 3, type: "Block",
+    { id: "cis2105", code: "CIS 2105", color: "#B3D8E6", title: "Networking II", group: 3, type: "Block",
       days: ["M", "W"], start: "12:30", end: "15:00", room: "LB470 TC",
       faculty: "Sebial, Archival J.", units: 3, enrolled: 30, cap: 30 },
-    { id: "is3103", code: "IS 3103", title: "Application Development and Emerging Technologies", group: 1, type: "Block",
+    { id: "is3103", code: "IS 3103", color: "#9AEE8E", title: "Application Development and Emerging Technologies", group: 1, type: "Block",
       days: ["T", "Th"], start: "10:00", end: "12:30", room: "LB468 TC",
       faculty: "Tongco, Rannzel Dwayne M.", units: 3, enrolled: 14, cap: 25 },
-    { id: "is4103", code: "IS 4103", title: "Evaluation of Business Performance", group: 1, type: "Regular",
+    { id: "is4103", code: "IS 4103", color: "#C6853F", title: "Evaluation of Business Performance", group: 1, type: "Regular",
       days: ["F"], start: "10:30", end: "13:30", room: "LB486 TC",
       faculty: "Sionzon, Marian Concepcion R.", units: 3, enrolled: 30, cap: 40 }
   ];
@@ -147,7 +148,7 @@ var titles = {
     if (state.enrolled){
       setText(".js-eb-title", "Enrolled · " + n + " courses, " + units + " units");
       setText(".js-eb-meta", "Your study load was sent to your school email." + (waitN ? " Waitlisted for 1 course." : ""));
-      btn.textContent = "Download study load";
+      btn.textContent = "View study load";
       btn.disabled = false;
     } else {
       setText(".js-eb-title", n + (n === 1 ? " course" : " courses") + " · " + units + " units");
@@ -180,16 +181,104 @@ var titles = {
     });
     setText(".js-step3", state.enrolled ? n + " courses, " + units + " units" : "Open until 6:00 PM");
 
-    setText(".js-cc-title", state.enrolled ? "Your study load" : "Advised courses");
+    setText(".js-cc-title", state.enrolled ? "Enrolled courses" : "Advised courses");
     setText(".js-cc-sub", state.enrolled
-      ? "This is your official study load for 1st Semester."
+      ? "You\u2019re enrolled. Your timetable and PDF are under Study Load."
       : "Picked by your adviser for your block section, IS-A. Uncheck anything you don’t want to take.");
+
+    renderStudyLoad();
   }
+
+  /* ---------- Study load page ---------- */
+
+  var DAYS = [["M", "Monday", "Mon"], ["T", "Tuesday", "Tue"], ["W", "Wednesday", "Wed"], ["Th", "Thursday", "Thu"], ["F", "Friday", "Fri"], ["S", "Saturday", "Sat"]];
+  var SLOT = 30;
+
+  function pad12(m){
+    var h = Math.floor(m / 60);
+    return String(h % 12 || 12).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0") + " " + (h < 12 ? "AM" : "PM");
+  }
+  function roomCode(c){ return c.room.replace(/\s+/g, ""); }
+
+  function renderStudyLoad(){
+    var list = picked();
+    var units = list.reduce(function(s, c){ return s + c.units; }, 0);
+    var waitlisted = courses.filter(function(c){ return state.waitlisted[c.id]; });
+
+    document.querySelector(".js-sl-empty").hidden = state.enrolled;
+    document.querySelector(".js-sl-body").hidden = !state.enrolled;
+    if (!state.enrolled) return;
+
+    setText(".js-sl-summary", list.length + " courses \u00b7 " + units + " units");
+    setText(".js-sl-units", units.toFixed(1));
+    var note = document.querySelector(".js-sl-note");
+    note.hidden = !waitlisted.length;
+    note.textContent = waitlisted.length
+      ? "Waitlisted, not on this schedule: " + waitlisted.map(function(c){ return c.code + " " + c.title; }).join(", ") + "."
+      : "";
+
+    var days = DAYS.filter(function(d, i){
+      return i < 5 || list.some(function(c){ return c.days.indexOf(d[0]) > -1; });
+    });
+    var first = Math.floor(Math.min.apply(null, list.map(function(c){ return toMin(c.start); })) / SLOT) * SLOT;
+    var last = Math.ceil(Math.max.apply(null, list.map(function(c){ return toMin(c.end); })) / SLOT) * SLOT;
+    var slots = (last - first) / SLOT;
+
+    // Desktop: a grid like the printed study load. Course blocks span their slots.
+    var tt = document.getElementById("timetable");
+    tt.style.gridTemplateColumns = "minmax(150px, auto) repeat(" + days.length + ", 1fr)";
+    tt.style.gridTemplateRows = "auto repeat(" + slots + ", 30px)";
+    var html = '<div class="tt-head" style="grid-area:1/1">Time</div>';
+    days.forEach(function(d, i){ html += '<div class="tt-head" style="grid-area:1/' + (i + 2) + '">' + d[1] + "</div>"; });
+    for (var s = 0; s < slots; s++){
+      var t = first + s * SLOT;
+      html += '<div class="tt-time" style="grid-area:' + (s + 2) + '/1">' + pad12(t) + " - " + pad12(t + SLOT) + "</div>";
+    }
+    days.forEach(function(d, di){
+      var taken = [];
+      list.forEach(function(c){
+        if (c.days.indexOf(d[0]) < 0) return;
+        var a = (toMin(c.start) - first) / SLOT, b = (toMin(c.end) - first) / SLOT;
+        for (var k = a; k < b; k++) taken[k] = true;
+        html += '<div class="tt-block" style="grid-area:' + (a + 2) + "/" + (di + 2) + "/" + (b + 2) + "/" + (di + 3) +
+          ";background:" + c.color + '" title="' + c.title + '"><b>' + c.code + "</b> " + roomCode(c) + "</div>";
+      });
+      for (var k = 0; k < slots; k++){
+        if (!taken[k]) html += '<div class="tt-cell" style="grid-area:' + (k + 2) + "/" + (di + 2) + '"></div>';
+      }
+    });
+    tt.innerHTML = html;
+
+    // Mobile: the same week as a day-by-day agenda.
+    var agenda = "";
+    days.forEach(function(d){
+      var todays = list.filter(function(c){ return c.days.indexOf(d[0]) > -1; })
+        .sort(function(a, b){ return toMin(a.start) - toMin(b.start); });
+      if (!todays.length) return;
+      agenda += '<div class="ag-day"><h4>' + d[1] + "</h4>";
+      todays.forEach(function(c){
+        agenda += '<div class="ag-item" style="border-left-color:' + c.color + '"><span class="ag-time">' + fmtTime(c.start) + "&ndash;" + fmtTime(c.end) + "</span>" +
+          "<b>" + c.code + "</b> " + c.title + '<span class="ag-room">' + c.room + "</span></div>";
+      });
+      agenda += "</div>";
+    });
+    document.getElementById("agenda").innerHTML = agenda;
+
+    document.getElementById("sl-courses").innerHTML = list.map(function(c){
+      return '<tr><td><span class="sl-swatch" style="background:' + c.color + '"></span><span class="hist-code">' + c.code + "</span><br>" + c.title + "</td>" +
+        "<td>" + c.days.join(" ") + " " + fmtTime(c.start) + "&ndash;" + fmtTime(c.end) + "</td>" +
+        "<td>" + c.room + "</td><td>" + c.faculty + "</td><td>" + c.units.toFixed(1) + "</td></tr>";
+    }).join("");
+  }
+
+  document.querySelector(".js-download").addEventListener("click", function(){
+    if (checkSession()) downloadStudyLoad(this);
+  });
 
   document.querySelector(".js-enroll").addEventListener("click", function(){
     if (!checkSession()) return;
     if (state.enrolled){
-      downloadStudyLoad(this);
+      location.hash = "#studyload";
       return;
     }
     var btn = this;
@@ -220,9 +309,10 @@ var titles = {
 
   function downloadStudyLoad(btn){
     var list = picked();
-    var label = btn.textContent;
+    var label = btn.querySelector("span") || btn;
+    var text = label.textContent;
     btn.disabled = true;
-    btn.textContent = "Preparing PDF\u2026";
+    label.textContent = "Preparing PDF\u2026";
     loadJsPdf().then(function(){
       var doc = buildStudyLoadPdf(list, {
         term: "1st Semester, A.Y. 2026\u20132027",
@@ -237,7 +327,7 @@ var titles = {
       toast("Couldn\u2019t load the PDF generator. Check your connection and try again.");
     }).then(function(){
       btn.disabled = false;
-      btn.textContent = label;
+      label.textContent = text;
     });
   }
 

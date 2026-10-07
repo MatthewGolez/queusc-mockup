@@ -4,10 +4,6 @@ function buildStudyLoadPdf(courses, opts){
     var doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
     var DAYS = [["M", "Monday"], ["T", "Tuesday"], ["W", "Wednesday"], ["Th", "Thursday"], ["F", "Friday"], ["S", "Saturday"]];
-    var COLORS = {
-      "CIS 2101": "#E88080", "CIS 2102": "#45B3AA", "CIS 2103": "#F4A07C",
-      "CIS 2105": "#B3D8E6", "IS 3103": "#9AEE8E", "IS 4103": "#C6853F"
-    };
     var FALLBACK = ["#F2D479", "#C9B6E8", "#F7B7C8", "#A9C4F5"];
     var INK = "#333333", MUTED = "#666666", LINE = "#333333", SLOT = 30;
 
@@ -16,7 +12,7 @@ function buildStudyLoadPdf(courses, opts){
       var h = Math.floor(m / 60), mm = String(m % 60).padStart(2, "0");
       return String(h % 12 || 12).padStart(2, "0") + ":" + mm + " " + (h < 12 ? "AM" : "PM");
     }
-    function colorFor(c, i){ return COLORS[c.code] || FALLBACK[i % FALLBACK.length]; }
+    function colorFor(c, i){ return c.color || FALLBACK[i % FALLBACK.length]; }
     function room(c){ return c.room.replace(/\s+/g, ""); }
 
     var pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight();
