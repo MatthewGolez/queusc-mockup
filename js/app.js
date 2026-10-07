@@ -414,8 +414,11 @@ var titles = {
     }).join("");
   }
 
-  document.querySelector(".js-download").addEventListener("click", function(){
-    if (checkSession()) downloadStudyLoad(this);
+  // Two separate PDFs: the weekly schedule grid, or the study load course list.
+  $(".js-download").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      if (checkSession()) downloadStudyLoad(this, this.dataset.part);
+    });
   });
 
   document.querySelector(".js-enroll").addEventListener("click", function(){
@@ -458,7 +461,7 @@ var titles = {
     return jspdfReady;
   }
 
-  function downloadStudyLoad(btn){
+  function downloadStudyLoad(btn, part){
     var list = state.load;
     var label = btn.querySelector("span") || btn;
     var text = label.textContent;
@@ -469,11 +472,13 @@ var titles = {
         term: "1st Semester, A.Y. 2026-2027",
         student: QueuAuth.fullName(currentUser) + " (" + currentUser.id + "), " + QueuAuth.program,
         section: state.label,
+        part: part,
         generated: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
         units: sumUnits(list)
       });
-      doc.save("QueuSC-Study-Load-1st-Sem-2026-2027.pdf");
-      toast("Study load downloaded.");
+      var schedule = part === "schedule";
+      doc.save(schedule ? "QueuSC-Class-Schedule-1st-Sem-2026-2027.pdf" : "QueuSC-Study-Load-1st-Sem-2026-2027.pdf");
+      toast(schedule ? "Class schedule downloaded." : "Study load downloaded.");
     }).catch(function(){
       toast("Couldn\u2019t load the PDF generator. Check your connection and try again.");
     }).then(function(){

@@ -165,9 +165,9 @@ var QueuCurriculum = (function(){
       return out;
     }
 
-    var COLORS = { "CIS 2101": "#E88080", "CIS 2102": "#45B3AA", "CIS 2103": "#F4A07C", "CIS 2105": "#B3D8E6",
-      "IS 3103": "#9AEE8E", "IS 4103": "#C6853F", "GE-ETHICS": "#F2D479", "GE-FREELEC 2": "#C9B6E8", "TPE 2103": "#A9C4F5" };
-    var PALETTE = ["#B8E0C8", "#F7B7C8", "#F5C28E", "#9FD3D9", "#D9C2F0", "#C5D88A", "#E3A6C9", "#A8C8F0", "#F0D58A", "#C9B8A6"];
+    var COLORS = { "CIS 2101": "#FF6B6B", "CIS 2102": "#1FC7B6", "CIS 2103": "#FF9A4D", "CIS 2105": "#4DB8F5",
+      "IS 3103": "#5EDB6E", "IS 4103": "#E8A530", "GE-ETHICS": "#FFD43B", "GE-FREELEC 2": "#B58CFF", "TPE 2103": "#7C9CFF" };
+    var PALETTE = ["#3DDC97", "#FF7EB6", "#FFB13D", "#2BD4E8", "#C77DFF", "#9BDB4D", "#F06292", "#5C9DFF", "#F9D923", "#FF8A5B"];
 
     // Every course gets a status: passed, current (this term), available (prerequisites met), or locked.
     var catalog = [];
