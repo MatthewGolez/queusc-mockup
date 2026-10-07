@@ -2,7 +2,7 @@
 var QueuAuth = (function(){
     var KEY = "queusc.session";
     var TTL = 8 * 60 * 60 * 1000;
-    var PAGES = ["dashboard", "advise", "downpayment", "history"];
+    var PAGES = ["dashboard", "advise", "studyload", "downpayment", "history"];
 
     var users = [
       { id: "25100872", email: "25100872@usc.edu.ph", first: "Caroline", middle: "Sio Ang", last: "Gobonseng", color: "#7B57B8" },
@@ -79,7 +79,7 @@ var QueuAuth = (function(){
 
     return {
       users: users,
-      program: "BS Information Systems · 2nd Year, IS-A",
+      program: "BS Information Systems · 2nd Year",
       current: current,
       signIn: signIn,
       signOut: signOut,
