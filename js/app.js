@@ -3,53 +3,18 @@ var titles = {
     advise: ["Advise & Enroll", "Choose your courses, then pick your block or groups before your window closes."],
     studyload: ["Study Load", "Your official class schedule for 1st Semester."],
     downpayment: ["Downpayment", "Your payment for this semester\u2019s enrollment slot."],
-    history: ["Course History", "Your full curriculum, term by term."]
+    history: ["Course History", "Your prospectus, term by term, with what you\u2019ve passed and what you can take."]
   };
 
-  // Each group: [number, days, start, end, room, faculty, enrolled, capacity]
-  var courses = [
-    { id: "cis2101", code: "CIS 2101", color: "#E88080", title: "Data Structures and Algorithms", units: 3, groups: [
-      [1, "T Th", "07:30", "10:00", "LB446 TC", "Sabandal, Gran G.", 27, 30],
-      [2, "M W", "07:30", "10:00", "LB447 TC", "Enriquez, Kirstine Mae N.", 30, 30],
-      [3, "M W", "10:00", "12:30", "LB446 TC", "Sabandal, Gran G.", 22, 30],
-      [4, "T Th", "15:00", "17:30", "LB448 TC", "Enriquez, Kirstine Mae N.", 13, 30],
-      [5, "S", "08:00", "13:00", "LB446 TC", "Sabandal, Gran G.", 6, 30] ] },
-    { id: "cis2102", code: "CIS 2102", color: "#45B3AA", title: "Web Development II", units: 3, groups: [
-      [1, "T Th", "15:00", "17:30", "LB446 TC", "Belarmino, Chris Ray B.", 18, 25],
-      [2, "M W", "15:00", "17:30", "LB449 TC", "Belarmino, Chris Ray B.", 25, 25],
-      [3, "T Th", "10:00", "12:30", "LB449 TC", "Tongco, Rannzel Dwayne M.", 12, 25],
-      [4, "M W", "07:30", "10:00", "LB446 TC", "Belarmino, Chris Ray B.", 20, 25],
-      [5, "F", "07:30", "12:30", "LB450 TC", "Tongco, Rannzel Dwayne M.", 6, 25] ] },
-    { id: "cis2103", code: "CIS 2103", color: "#F4A07C", title: "Object-Oriented Programming", units: 3, groups: [
-      [1, "T Th", "07:30", "10:00", "LB467 TC", "Enriquez, Kirstine Mae N.", 25, 30],
-      [2, "M W", "15:00", "17:30", "LB467 TC", "Sabandal, Gran G. \u00b7 Enriquez, Kirstine Mae N.", 9, 30],
-      [3, "M W", "10:00", "12:30", "LB468 TC", "Enriquez, Kirstine Mae N.", 30, 30],
-      [4, "T Th", "15:00", "17:30", "LB467 TC", "Sabandal, Gran G.", 17, 30],
-      [5, "T Th", "12:30", "15:00", "LB469 TC", "Enriquez, Kirstine Mae N.", 11, 30] ] },
-    { id: "cis2105", code: "CIS 2105", color: "#B3D8E6", title: "Networking II", units: 3, groups: [
-      [1, "T Th", "12:30", "15:00", "LB470 TC", "Sebial, Archival J.", 24, 30],
-      [2, "M W", "10:00", "12:30", "LB470 TC", "Sebial, Archival J.", 19, 30],
-      [3, "M W", "12:30", "15:00", "LB470 TC", "Sebial, Archival J.", 30, 30],
-      [4, "T Th", "15:00", "17:30", "LB471 TC", "Sebial, Archival J.", 28, 30],
-      [5, "S", "08:00", "13:00", "LB470 TC", "Sebial, Archival J.", 5, 30] ] },
-    { id: "is3103", code: "IS 3103", color: "#9AEE8E", title: "Application Development and Emerging Technologies", units: 3, groups: [
-      [1, "T Th", "10:00", "12:30", "LB468 TC", "Tongco, Rannzel Dwayne M.", 14, 25],
-      [2, "M W", "07:30", "10:00", "LB468 TC", "Tongco, Rannzel Dwayne M.", 25, 25],
-      [3, "T Th", "15:00", "17:30", "LB468 TC", "Tongco, Rannzel Dwayne M.", 21, 25],
-      [4, "M W", "12:30", "15:00", "LB469 TC", "Tongco, Rannzel Dwayne M.", 16, 25],
-      [5, "F", "07:30", "12:30", "LB468 TC", "Belarmino, Chris Ray B.", 8, 25] ] },
-    { id: "is4103", code: "IS 4103", color: "#C6853F", title: "Evaluation of Business Performance", units: 3, groups: [
-      [1, "F", "10:30", "13:30", "LB486 TC", "Sionzon, Marian Concepcion R.", 30, 40],
-      [2, "F", "13:30", "16:30", "LB486 TC", "Sionzon, Marian Concepcion R.", 22, 40],
-      [3, "T Th", "07:30", "09:00", "LB487 TC", "Sionzon, Marian Concepcion R.", 40, 40],
-      [4, "M W", "17:30", "19:00", "LB486 TC", "Sionzon, Marian Concepcion R.", 12, 40],
-      [5, "S", "07:30", "10:30", "LB487 TC", "Sionzon, Marian Concepcion R.", 3, 40] ] }
-  ];
+  // Courses this student may take this term: this term's curriculum, then anything from other terms whose prerequisites are passed.
+  var courses = QueuCurriculum.offerable;
+  var thisTerm = courses.filter(function(c){ return c.status === "current"; });
+  var MAX_UNITS = QueuCurriculum.maxUnits;
 
   // Blocks: a fixed group for every course. Seats are held for the block as a whole.
   var blocks = {
-    A: { picks: { cis2101: 3, cis2102: 1, cis2103: 2, cis2105: 3, is3103: 1, is4103: 1 }, enrolled: 31, cap: 40 },
-    B: { picks: { cis2101: 1, cis2102: 4, cis2103: 5, cis2105: 2, is3103: 4, is4103: 2 }, enrolled: 37, cap: 40 }
+    A: { picks: { cis2101: 3, cis2102: 1, cis2103: 2, cis2105: 3, geethics: 1, gefreelec2: 1, is3103: 1, is4103: 1, tpe2103: 1 }, enrolled: 31, cap: 40 },
+    B: { picks: { cis2101: 1, cis2102: 4, cis2103: 5, cis2105: 2, geethics: 2, gefreelec2: 2, is3103: 4, is4103: 2, tpe2103: 2 }, enrolled: 37, cap: 40 }
   };
 
   // The guard in <head> already sent signed-out visitors to login.html.
@@ -58,7 +23,7 @@ var titles = {
   var state;
   function freshState(){
     var advised = {};
-    courses.forEach(function(c){ advised[c.id] = true; });
+    thisTerm.forEach(function(c){ advised[c.id] = true; });
     return { step: "advise", advised: advised, mode: null, block: null, groups: {}, enrolled: false, load: [], label: "" };
   }
   state = freshState();
@@ -85,13 +50,16 @@ var titles = {
   function when(sec){ return sec.days.join(" ") + " " + fmtTime(sec.start) + "\u2013" + fmtTime(sec.end); }
 
   function advisedCourses(){ return courses.filter(function(c){ return state.advised[c.id]; }); }
-  // Blocks run every course in the semester, so they're open only to students taking all of them.
-  function blockOpen(){ return advisedCourses().length === courses.length; }
+  // A block runs exactly this term's curriculum, so it's open only to students advising exactly those courses.
+  function blockOpen(){
+    var list = advisedCourses();
+    return list.length === thisTerm.length && list.every(function(c){ return c.status === "current"; });
+  }
 
   function picked(){
     if (state.mode === "block" && state.block && blockOpen()){
       var picks = blocks[state.block].picks;
-      return courses.map(function(c){ return section(c, picks[c.id]); });
+      return thisTerm.map(function(c){ return section(c, picks[c.id]); });
     }
     if (state.mode === "custom"){
       return advisedCourses().filter(function(c){ return state.groups[c.id]; })
@@ -126,7 +94,7 @@ var titles = {
   function renderBlocks(){
     document.getElementById("blocks").innerHTML = Object.keys(blocks).map(function(key){
       var b = blocks[key], left = b.cap - b.enrolled;
-      var list = courses.map(function(c){ return section(c, b.picks[c.id]); });
+      var list = thisTerm.map(function(c){ return section(c, b.picks[c.id]); });
       return '<label class="block-opt"><input type="radio" name="block" value="' + key + '"' + (state.block === key ? " checked" : "") + (left <= 0 ? " disabled" : "") + ">" +
         '<span class="bo-head"><b>Block ' + key + "</b>" +
         '<span class="bo-seats' + (left <= 5 ? " low" : "") + '">' + (left > 0 ? left + " seats left" : "Full") + "</span></span>" +
@@ -189,18 +157,64 @@ var titles = {
 
   /* ---------- Summary, dashboard, enroll ---------- */
 
-  /* ---------- Step 1: advise ---------- */
+  /* ---------- Course history (prospectus) ---------- */
 
-  function renderAdvise(){
-    document.getElementById("advise-list").innerHTML = courses.map(function(c){
-      return '<li><label class="advise-item"><input type="checkbox" data-advise="' + c.id + '"' + (state.advised[c.id] ? " checked" : "") + ">" +
-        '<span class="sl-swatch" style="background:' + c.color + '"></span>' +
-        '<span class="ai-text"><b>' + c.code + "</b><span>" + c.title + "</span></span>" +
-        '<span class="ai-units">' + c.units.toFixed(1) + " units</span></label></li>";
+  var STATUS = { passed: ["st-passed", "Passed"], current: ["st-current", "This term"], available: ["st-available", "Can take"],
+    locked: ["st-locked", "Locked"], enrolled: ["st-enrolled", "Enrolled"] };
+
+  function renderHistory(){
+    var enrolled = {};
+    if (state.enrolled) state.load.forEach(function(c){ enrolled[c.id] = c.group; });
+    setText(".js-degree", QueuCurriculum.degree);
+    setText(".js-effective", "Effective Year: " + QueuCurriculum.effective);
+
+    document.getElementById("prospectus").innerHTML = QueuCurriculum.terms.map(function(t, ti){
+      var rows = QueuCurriculum.catalog.filter(function(c){ return c.termIndex === ti; });
+      var units = rows.reduce(function(s, c){ return s + c.units; }, 0);
+      var done = rows.filter(function(c){ return c.status === "passed"; }).length;
+      var isNow = t === QueuCurriculum.currentTerm;
+      return '<div class="card hist-term' + (isNow ? " is-current" : "") + '">' +
+        "<h3>" + QueuCurriculum.termName(t) + (isNow ? ' <span class="tag tag-gold">This term</span>' : "") +
+        '<span class="hist-count">' + (done === rows.length ? "All passed" : done ? done + " of " + rows.length + " passed" : "") + "</span></h3>" +
+        '<table class="pros-table"><thead><tr><th>Course</th><th>Description</th><th>Units</th><th>Requisite</th><th>Status</th></tr></thead><tbody>' +
+        rows.map(function(c){
+          var key = enrolled[c.id] ? "enrolled" : c.status;
+          var st = STATUS[key];
+          var note = key === "enrolled" ? "Group " + enrolled[c.id] : c.status === "locked" ? c.reason : "";
+          return '<tr class="is-' + key + '"><td class="hist-code">' + c.code + "</td><td>" + c.title + "</td><td>" + c.units.toFixed(1) + "</td>" +
+            '<td class="pt-req">' + (QueuCurriculum.reqText(c.req) || '<span class="pt-none">&mdash;</span>') + "</td>" +
+            '<td class="pt-status"><span class="st ' + st[0] + '">' + st[1] + "</span>" + (note ? '<span class="pt-note">' + note + "</span>" : "") + "</td></tr>";
+        }).join("") +
+        '</tbody></table><div class="hist-total">Total units: <b>' + units.toFixed(1) + "</b></div></div>";
     }).join("");
   }
 
-  document.getElementById("advise-list").addEventListener("change", function(e){
+  /* ---------- Step 1: advise ---------- */
+
+  function adviseItem(c){
+    return '<li><label class="advise-item"><input type="checkbox" data-advise="' + c.id + '"' + (state.advised[c.id] ? " checked" : "") + ">" +
+      '<span class="sl-swatch" style="background:' + c.color + '"></span>' +
+      '<span class="ai-text"><b>' + c.code + "</b><span>" + c.title + "</span>" +
+      (c.status === "available" ? '<span class="ai-from">' + c.termName + (c.req ? " \u00b7 " + QueuCurriculum.reqText(c.req) : "") + "</span>" : "") + "</span>" +
+      '<span class="ai-units">' + c.units.toFixed(1) + " units</span></label></li>";
+  }
+
+  function renderAdvise(){
+    document.getElementById("advise-current").innerHTML = thisTerm.map(adviseItem).join("");
+    var extras = courses.filter(function(c){ return c.status === "available"; });
+    document.getElementById("advise-extra").innerHTML = extras.map(adviseItem).join("");
+    setText(".js-extra-count", extras.length);
+    if (extras.some(function(c){ return state.advised[c.id]; })) document.querySelector(".js-extra").open = true;
+    var locked = QueuCurriculum.catalog.filter(function(c){ return c.status === "locked"; });
+    setText(".js-locked-count", locked.length);
+    document.getElementById("advise-locked").innerHTML = locked.map(function(c){
+      return '<li class="advise-item is-locked"><svg class="ic"><use href="#i-lock"/></svg>' +
+        '<span class="ai-text"><b>' + c.code + "</b><span>" + c.title + '</span><span class="ai-from">' + c.termName + "</span></span>" +
+        '<span class="ai-reason">' + c.reason + "</span></li>";
+    }).join("");
+  }
+
+  document.querySelector(".js-advise-pane").addEventListener("change", function(e){
     var id = e.target.dataset.advise;
     if (!id) return;
     state.advised[id] = e.target.checked;
@@ -243,7 +257,7 @@ var titles = {
     blockRadio.closest(".mode-opt").classList.toggle("is-disabled", !blockOpen());
     setText(".js-block-desc", blockOpen()
       ? "Join Block A or Block B. Your whole schedule is fixed, and you take every class with the same blockmates."
-      : "Blocks take all " + courses.length + " courses together. Advise every course to join one.");
+      : "Blocks run exactly this term\u2019s " + thisTerm.length + " courses. Advise those, and only those, to join one.");
 
     $('input[name="mode"]').forEach(function(r){ r.checked = r.value === state.mode; });
     document.querySelector(".js-block-pane").hidden = state.mode !== "block";
@@ -261,9 +275,13 @@ var titles = {
     bar.classList.remove("has-conflict");
     if (advising){
       setText(".js-eb-title", advised.length + (advised.length === 1 ? " course" : " courses") + " \u00b7 " + advisedUnits + " units advised");
-      setText(".js-eb-meta", advised.length ? "Next, choose your block or groups" : "Select at least one course");
+      var over = advisedUnits - MAX_UNITS;
+      setText(".js-eb-meta", !advised.length ? "Select at least one course"
+        : over > 0 ? "Over the " + MAX_UNITS + "-unit limit by " + over + (over === 1 ? " unit" : " units")
+        : "Next, choose your block or groups \u00b7 max " + MAX_UNITS + " units");
+      bar.classList.toggle("has-conflict", over > 0);
       btn.textContent = "Continue to enroll";
-      btn.disabled = closed || !advised.length;
+      btn.disabled = closed || !advised.length || over > 0;
     } else if (state.mode === "block"){
       setText(".js-eb-title", state.block ? "Block " + state.block + " \u00b7 " + n + " courses \u00b7 " + units + " units" : "No block selected");
       setText(".js-eb-meta", state.block ? "Fixed schedule \u00b7 no time conflicts" : "Pick Block A or Block B above");
@@ -300,6 +318,7 @@ var titles = {
     setText(".js-step3", state.enrolled ? state.label + " \u00b7 " + n + " courses, " + units + " units" : "Open until 6:00 PM");
 
     renderStudyLoad();
+    renderHistory();
   }
 
   /* ---------- Study load page ---------- */
@@ -391,7 +410,7 @@ var titles = {
   document.querySelector(".js-enroll").addEventListener("click", function(){
     if (!checkSession()) return;
     if (state.step === "advise"){
-      if (!advisedCourses().length) return;
+      if (!advisedCourses().length || sumUnits(advisedCourses()) > MAX_UNITS) return;
       state.step = "enroll";
       render();
       window.scrollTo(0, 0);
