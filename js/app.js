@@ -47,7 +47,7 @@ var titles = {
       days: g[1].split(" "), start: g[2], end: g[3], room: g[4], faculty: g[5], enrolled: g[6], cap: g[7] };
   }
   function isFull(sec){ return sec.enrolled >= sec.cap; }
-  function when(sec){ return sec.days.join(" ") + " " + fmtTime(sec.start) + "\u2013" + fmtTime(sec.end); }
+  function when(sec){ return sec.days.join(" ") + " " + fmtTime(sec.start) + " - " + fmtTime(sec.end); }
 
   function advisedCourses(){ return courses.filter(function(c){ return state.advised[c.id]; }); }
   // A block runs exactly this term's curriculum, so it's open only to students advising exactly those courses.
@@ -147,9 +147,9 @@ var titles = {
         '<td class="g-pick"><select data-course="' + c.id + '" aria-label="Group for ' + c.code + '">' + options + "</select>" +
           (clash ? '<span class="clash-msg">Overlaps with ' + clash + "</span>" : "") +
           (stuck ? '<span class="clash-msg">Every open group overlaps your other picks. Change another course\u2019s group.</span>' : "") + "</td>" +
-        '<td class="g-fac">' + (sec ? sec.room + '<span class="room">' + sec.faculty + "</span>" : '<span class="room">&mdash;</span>') + "</td>" +
+        '<td class="g-fac">' + (sec ? sec.room + '<span class="room">' + sec.faculty + "</span>" : '<span class="room">-</span>') + "</td>" +
         '<td class="c-seats">' + (sec ? seatsHtml(sec.enrolled, sec.cap) : "") + "</td>" +
-        '<td class="c-units">' + (sec ? c.units.toFixed(1) : "&ndash;") + "</td></tr>";
+        '<td class="c-units">' + (sec ? c.units.toFixed(1) : "-") + "</td></tr>";
     }).join("");
   }
 
@@ -193,7 +193,7 @@ var titles = {
           var st = STATUS[key];
           var note = key === "enrolled" ? "Group " + enrolled[c.id] : c.status === "locked" ? c.reason : "";
           return '<tr class="is-' + key + '"><td class="hist-code">' + c.code + "</td><td>" + c.title + "</td><td>" + c.units.toFixed(1) + "</td>" +
-            '<td class="pt-req">' + (QueuCurriculum.reqText(c.req) || '<span class="pt-none">&mdash;</span>') + "</td>" +
+            '<td class="pt-req">' + (QueuCurriculum.reqText(c.req) || '<span class="pt-none">-</span>') + "</td>" +
             '<td class="pt-status"><span class="st ' + st[0] + '">' + st[1] + "</span>" + (note ? '<span class="pt-note">' + note + "</span>" : "") + "</td></tr>";
         }).join("") +
         '</tbody></table><div class="hist-total">Total units: <b>' + units.toFixed(1) + "</b></div></div>";
@@ -388,7 +388,7 @@ var titles = {
       if (!todays.length) return;
       agenda += '<div class="ag-day"><h4>' + d[1] + "</h4>";
       todays.forEach(function(c){
-        agenda += '<div class="ag-item' + (clashing[c.id] ? " is-clash" : "") + '" style="border-left-color:' + c.color + '"><span class="ag-time">' + fmtTime(c.start) + "&ndash;" + fmtTime(c.end) + "</span>" +
+        agenda += '<div class="ag-item' + (clashing[c.id] ? " is-clash" : "") + '" style="border-left-color:' + c.color + '"><span class="ag-time">' + fmtTime(c.start) + " - " + fmtTime(c.end) + "</span>" +
           "<b>" + c.code + "</b> " + c.title + '<span class="ag-room">Group ' + c.group + ", " + c.room + "</span></div>";
       });
       agenda += "</div>";
@@ -414,8 +414,11 @@ var titles = {
     }).join("");
   }
 
-  document.querySelector(".js-download").addEventListener("click", function(){
-    if (checkSession()) downloadStudyLoad(this);
+  // Two separate PDFs: the weekly schedule grid, or the study load course list.
+  $(".js-download").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      if (checkSession()) downloadStudyLoad(this, this.dataset.part);
+    });
   });
 
   document.querySelector(".js-enroll").addEventListener("click", function(){
@@ -458,7 +461,7 @@ var titles = {
     return jspdfReady;
   }
 
-  function downloadStudyLoad(btn){
+  function downloadStudyLoad(btn, part){
     var list = state.load;
     var label = btn.querySelector("span") || btn;
     var text = label.textContent;
@@ -469,11 +472,13 @@ var titles = {
         term: "1st Semester, A.Y. 2026-2027",
         student: QueuAuth.fullName(currentUser) + " (" + currentUser.id + "), " + QueuAuth.program,
         section: state.label,
+        part: part,
         generated: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
         units: sumUnits(list)
       });
-      doc.save("QueuSC-Study-Load-1st-Sem-2026-2027.pdf");
-      toast("Study load downloaded.");
+      var schedule = part === "schedule";
+      doc.save(schedule ? "QueuSC-Class-Schedule-1st-Sem-2026-2027.pdf" : "QueuSC-Study-Load-1st-Sem-2026-2027.pdf");
+      toast(schedule ? "Class schedule downloaded." : "Study load downloaded.");
     }).catch(function(){
       toast("Couldn\u2019t load the PDF generator. Check your connection and try again.");
     }).then(function(){
