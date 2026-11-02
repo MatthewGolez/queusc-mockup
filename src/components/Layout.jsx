@@ -46,7 +46,8 @@ function Shell({ user }) {
   const [title, sub] = (TITLES[page] || TITLES.dashboard)(user);
   const live = !state.enrolled && !closed;
 
-  useEffect(() => window.scrollTo(0, 0), [location.pathname]);
+  // Braces matter: newer browsers return a Promise from scrollTo, which React would call as a cleanup.
+  useEffect(() => { window.scrollTo(0, 0); }, [location.pathname]);
 
   // Re-check the stored session: it may have expired, or another tab signed out or switched accounts.
   useEffect(() => {
