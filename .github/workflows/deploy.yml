@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -39,5 +40,18 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # GitHub can still run its built-in "pages build and deployment" job on this commit, which
+      # publishes the raw source files. Wait for it to finish so the React build is published last.
+      - name: Wait for GitHub's built-in Pages job
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(seq 1 30); do
+            busy=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=${{ github.sha }}" \
+              --jq '[.workflow_runs[] | select(.name == "pages build and deployment" and .status != "completed")] | length')
+            if [ "$busy" = "0" ]; then exit 0; fi
+            echo "Built-in Pages job still running, waiting..."
+            sleep 10
+          done
       - id: deployment
         uses: actions/deploy-pages@v4
