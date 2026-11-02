@@ -749,6 +749,7 @@
   }
   .tt-cell{background:#fff;}
   .tt-block{
+    flex-wrap:wrap;
     display:flex;align-items:center;justify-content:center;gap:4px;
     text-align:center;
     padding:4px 6px;
