@@ -913,6 +913,14 @@
   .login-error{margin:8px 0 0;min-height:1.1em;font-size:0.8rem;color:var(--rust);}
   .login-note{margin:0;font-size:0.74rem;color:var(--faint);text-align:center;}
 
+  .crash h1{margin:0 0 6px;}
+  .crash-msg{
+    margin:0 0 18px;padding:10px 12px;
+    background:#fff;border:1px solid var(--rule);border-radius:8px;
+    font-size:0.8rem;color:var(--rust);white-space:pre-wrap;word-break:break-word;
+  }
+  .crash-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
   /* Mobile nav */
   .mobile-nav{display:none;}
 
