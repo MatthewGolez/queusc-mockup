@@ -1,7 +1,7 @@
 /* Builds one of two PDFs with jsPDF: part "schedule" (weekly timetable) or "list" (study load course list).
    Imported on demand, so jsPDF only loads when someone downloads. */
 import { jsPDF } from "jspdf";
-import { gridShape, pad12, roomCode, toMin, SLOT } from "./schedule.js";
+import { gridShape, pad12, plural, roomCode, toMin, SLOT } from "./schedule.js";
 
 const INK = "#333333";
 const MUTED = "#666666";
@@ -25,7 +25,7 @@ export function buildStudyLoadPdf(courses, opts) {
   doc.setTextColor(MUTED).setFontSize(8.5);
   doc.text("QueuSC", pageW - mx, y, { align: "right" });
   doc.text(`Generated ${opts.generated}`, pageW - mx, y + 6, { align: "right" });
-  doc.text(`${opts.section}: ${courses.length} courses, ${opts.units.toFixed(1)} units`, pageW - mx, y + 11, { align: "right" });
+  doc.text(`${opts.section}: ${plural(courses.length, "course")}, ${plural(opts.units.toFixed(1), "unit")}`, pageW - mx, y + 11, { align: "right" });
 
   const top = y + 17;
   if (isSchedule) drawTimetable(doc, courses, { mx, top, pageW });
