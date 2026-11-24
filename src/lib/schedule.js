@@ -66,3 +66,6 @@ export function reqText(req) {
   if (typeof req === "string") return `${req} year standing`;
   return `Prerequisite: ${req.join(", ")}`;
 }
+
+// "1 course", "9 courses"
+export const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;

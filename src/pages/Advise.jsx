@@ -1,15 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { advisedCourses, blockOpen, blockSections, picked } from "../lib/enrollment.js";
-import { conflicts, isFull, overlaps, reqText, section, sumUnits, when } from "../lib/schedule.js";
+import { conflicts, isFull, overlaps, plural, reqText, section, sumUnits, when } from "../lib/schedule.js";
 import { api } from "../lib/api.js";
 import { Countdown, fmtDateTime, formatLeft, useClock, useEnrollment } from "../state/Enrollment.jsx";
 import { useToast } from "../state/Toast.jsx";
 import Icon from "../components/Icon.jsx";
 import Seats from "../components/Seats.jsx";
 import Timetable from "../components/Timetable.jsx";
-
-const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 export default function Advise() {
   const { data, state, windowState } = useEnrollment();
@@ -28,7 +26,7 @@ export default function Advise() {
         <div className="card sl-empty">
           <span className="done-ic"><Icon name="check" /></span>
           <h3>You&rsquo;re enrolled</h3>
-          <p>{label}: {load.length} courses, {sumUnits(load)} units.</p>
+          <p>{label}: {plural(load.length, "course")}, {plural(sumUnits(load), "unit")}.</p>
           <Link className="btn btn-primary" to="/studyload"><span>View study load</span><Icon name="arrow" /></Link>
           <p className="done-foot">Need changes? Add, drop, or change groups during the adjustment period.</p>
         </div>
@@ -87,11 +85,19 @@ function EnrollFlow() {
 
   // When the turn runs out, rejoin the line.
   useEffect(() => {
-    if (admitted && turnLeft <= 0) {
-      toast("Your turn ended. You’re back in line.");
-      retick();
-    }
+    if (admitted && turnLeft <= 0) retick();
   }, [admitted, turnLeft <= 0]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Tell the student when a turn they had has ended, whether they went back in line or got a new turn.
+  const lastTurn = useRef(null);
+  useEffect(() => {
+    const prev = lastTurn.current;
+    const cur = queue.status === "admitted" ? queue.expiresAt : null;
+    if (prev && cur !== prev && Date.now() + data.clockOffset >= Date.parse(prev) - 2000) {
+      toast(cur ? "Your turn ended, so a new one started." : "Your turn ended. You’re back in line.");
+    }
+    lastTurn.current = cur;
+  }, [queue]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The bar at the bottom: what's chosen so far and the next action.
   let title = "";
@@ -101,21 +107,21 @@ function EnrollFlow() {
   let warn = false;
   if (advising) {
     const over = advisedUnits - maxUnits;
-    title = `${plural(advised.length, "course")}, ${advisedUnits} units advised`;
+    title = `${plural(advised.length, "course")}, ${plural(advisedUnits, "unit")} advised`;
     meta = !advised.length ? "Select at least one course"
       : over > 0 ? `Over the ${maxUnits}-unit limit by ${plural(over, "unit")}`
-      : `Next, choose your block or groups (max ${maxUnits} units)`;
+      : `Next, choose your block or groups (max ${plural(maxUnits, "unit")})`;
     warn = over > 0;
     action = "Continue to enroll";
     disabled = windowState === "closed" || !advised.length || over > 0;
   } else if (state.mode === "block") {
-    title = state.block ? `Block ${state.block}: ${list.length} courses, ${units} units` : "No block selected";
+    title = state.block ? `Block ${state.block}: ${plural(list.length, "course")}, ${plural(units, "unit")}` : "No block selected";
     meta = state.block ? "Fixed schedule, no time conflicts" : "Pick a block above";
     action = state.block ? `Enroll in Block ${state.block}` : "Enroll";
     disabled = !state.block;
   } else if (state.mode === "custom") {
     const missing = advised.length - list.length;
-    title = `Non-block: ${list.length} of ${advised.length} courses scheduled, ${units} units`;
+    title = `Non-block: ${list.length} of ${plural(advised.length, "course")} scheduled, ${plural(units, "unit")}`;
     meta = clashes.length ? `Time conflict: ${clashes[0][0].code} and ${clashes[0][1].code}`
       : missing ? `Choose a group for ${missing} more ${missing === 1 ? "course" : "courses"}`
       : "No time conflicts";
@@ -135,7 +141,7 @@ function EnrollFlow() {
         const body = state.mode === "block" ? { mode: "block", block: state.block }
           : { mode: "custom", groups: Object.fromEntries(advised.map((c) => [c.id, state.groups[c.id]])) };
         const done = await enroll(body);
-        toast(`Done. You’re enrolled${state.mode === "block" ? ` in ${done.label}` : ""}, ${done.load.length} courses.`);
+        toast(`Done. You’re enrolled${state.mode === "block" ? ` in ${done.label}` : ""}, ${plural(done.load.length, "course")}.`);
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
     } catch (err) {
@@ -170,7 +176,7 @@ function EnrollFlow() {
             <button className="linkish js-back" type="button" onClick={() => { dispatch({ type: "step", step: "advise" }); window.scrollTo(0, 0); }}>
               &larr; Back to advising
             </button>
-            <span>Advised: {advised.length} courses, {advisedUnits} units</span>
+            <span>Advised: {plural(advised.length, "course")}, {plural(advisedUnits, "unit")}</span>
           </div>
           {gate ? <GateCard gate={gate} />
             : admitted ? (
@@ -252,7 +258,7 @@ function AdvisePane() {
           <b>{c.code}</b><span>{c.title}</span>
           {c.status === "available" && <span className="ai-from">{c.termName}{c.req ? `. ${reqText(c.req)}` : ""}</span>}
         </span>
-        <span className="ai-units">{c.units.toFixed(1)} units</span>
+        <span className="ai-units">{plural(c.units.toFixed(1), "unit")}</span>
       </label>
     </li>
   );
@@ -281,7 +287,7 @@ function AdvisePane() {
           ))}
         </ul>
       </details>
-      <p className="cc-foot">You&rsquo;ll pick schedules in the next step. Maximum load is {data.maxUnits} units per semester.</p>
+      <p className="cc-foot">You&rsquo;ll pick schedules in the next step. Maximum load is {plural(data.maxUnits, "unit")} per semester.</p>
     </div>
   );
 }
@@ -304,7 +310,7 @@ function EnrollPane({ list, clashes, advised }) {
             <b>Block section</b>
             <span className="js-block-desc">
               {open ? `Join ${blockNames}. Your whole schedule is fixed, and you take every class with the same blockmates.`
-                : Object.keys(data.blocks).length ? `Blocks run exactly this term’s ${data.thisTerm.length} courses. Advise those, and only those, to join one.`
+                : Object.keys(data.blocks).length ? `Blocks run exactly this term’s ${plural(data.thisTerm.length, "course")}. Advise those, and only those, to join one.`
                 : "There are no blocks for your year this term."}
             </span>
           </span>
@@ -361,7 +367,7 @@ function BlockPicker() {
                   </span>
                 ))}
               </span>
-              <span className="bo-foot">{secs.length} courses, {sumUnits(secs)} units</span>
+              <span className="bo-foot">{plural(secs.length, "course")}, {plural(sumUnits(secs), "unit")}</span>
             </label>
           );
         })}

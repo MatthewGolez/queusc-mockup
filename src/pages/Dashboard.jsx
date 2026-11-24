@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Countdown, fmtDate, fmtDateTime, useClock, useEnrollment } from "../state/Enrollment.jsx";
-import { sumUnits } from "../lib/schedule.js";
+import { plural, sumUnits } from "../lib/schedule.js";
 import Icon from "../components/Icon.jsx";
 
 const YEARS = ["", "1st", "2nd", "3rd", "4th", "5th"];
@@ -14,8 +14,8 @@ export default function Dashboard() {
   const advised = data.advising?.courses.length;
   const steps = [
     [paid ? "done" : "current", "Downpayment", paid ? `₱${paid.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}, paid ${fmtDate(Date.parse(paid.paidAt))}` : "Not paid yet"],
-    [advised || enrolled ? "done" : paid ? "current" : "pending", "Advise", advised ? `${advised} courses chosen` : "Choose your courses"],
-    [enrolled ? "done" : advised ? "current" : "pending", "Enroll", enrolled ? `${label}: ${load.length} courses, ${units} units` : windowState === "open" ? `Open until ${fmtDateTime(closes)}` : windowState === "upcoming" ? `Opens ${fmtDateTime(opens)}` : "Window closed"],
+    [advised || enrolled ? "done" : paid ? "current" : "pending", "Advise", advised ? `${plural(advised, "course")} chosen` : "Choose your courses"],
+    [enrolled ? "done" : advised ? "current" : "pending", "Enroll", enrolled ? `${label}: ${plural(load.length, "course")}, ${plural(units, "unit")}` : windowState === "open" ? `Open until ${fmtDateTime(closes)}` : windowState === "upcoming" ? `Opens ${fmtDateTime(opens)}` : "Window closed"],
     [enrolled ? "done" : "pending", "Enrollment complete", "Study load issued"]
   ];
 
@@ -26,7 +26,7 @@ export default function Dashboard() {
           <div className="hero-main">
             <span className="eyebrow"><Icon name="check" />Enrollment complete</span>
             <h2>You&rsquo;re enrolled for 1st Semester</h2>
-            <p>{label}: {load.length} courses, {units} units.</p>
+            <p>{label}: {plural(load.length, "course")}, {plural(units, "unit")}.</p>
             <div className="hero-actions">
               <Link className="btn btn-gold btn-lg" to="/studyload"><span>View study load</span><Icon name="arrow" /></Link>
             </div>

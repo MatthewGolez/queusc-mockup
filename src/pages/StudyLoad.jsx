@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { fullName } from "../lib/auth.js";
 import { useAuth } from "../state/Auth.jsx";
-import { sumUnits, when } from "../lib/schedule.js";
+import { plural, sumUnits, when } from "../lib/schedule.js";
 import { useEnrollment } from "../state/Enrollment.jsx";
 import { useToast } from "../state/Toast.jsx";
 import Icon from "../components/Icon.jsx";
@@ -63,7 +63,7 @@ export default function StudyLoad() {
           <span className="badge badge-ok"><Icon name="check" />Enrolled</span>
           <span>1st Semester, A.Y. 2026-2027</span>
           <span>{label}</span>
-          <span>{load.length} courses, {units} units</span>
+          <span>{plural(load.length, "course")}, {plural(units, "unit")}</span>
         </div>
         <div className="dl-group">
           <button className="btn btn-primary js-download" data-part="schedule" type="button" disabled={!!busy} onClick={() => download("schedule")}>
