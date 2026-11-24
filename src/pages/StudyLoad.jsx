@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { PROGRAM, currentUser, fullName } from "../data/auth.js";
+import { fullName } from "../lib/auth.js";
+import { useAuth } from "../state/Auth.jsx";
 import { sumUnits, when } from "../lib/schedule.js";
 import { useEnrollment } from "../state/Enrollment.jsx";
 import { useToast } from "../state/Toast.jsx";
@@ -14,6 +15,7 @@ const FILES = {
 
 export default function StudyLoad() {
   const { state } = useEnrollment();
+  const { user } = useAuth();
   const toast = useToast();
   const [busy, setBusy] = useState(null);
   const { enrolled, load, label } = state;
@@ -21,15 +23,13 @@ export default function StudyLoad() {
 
   // Two separate PDFs: the weekly schedule grid, or the study load course list.
   const download = async (part) => {
-    const user = currentUser();
-    if (!user) return;
     setBusy(part);
     try {
       const { buildStudyLoadPdf } = await import("../lib/pdf.js");
       const doc = buildStudyLoadPdf(load, {
         part,
         term: "1st Semester, A.Y. 2026-2027",
-        student: `${fullName(user)} (${user.id}), ${PROGRAM}`,
+        student: `${fullName(user)} (${user.id}), ${user.program}, ${["", "1st", "2nd", "3rd", "4th", "5th"][user.yearLevel]} Year`,
         section: label,
         units,
         generated: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })

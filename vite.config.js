@@ -1,9 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// base "./" keeps asset paths relative, so the build works from the GitHub Pages
-// project folder (/queusc-mockup/) without hard-coding the repository name.
+// In development, API calls go to the Express server (npm run dev:server) on port 3000.
 export default defineConfig({
   plugins: [react()],
-  base: "./"
+  base: "./",
+  server: { proxy: { "/api": "http://localhost:3000" } }
 });

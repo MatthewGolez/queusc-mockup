@@ -1,0 +1,5 @@
+# Backup protection in case the web server ever serves this folder directly:
+# never hand out the .env file (database password) or other dotfiles.
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>

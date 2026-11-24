@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MAX_UNITS, catalog, offerable, reqText, thisTerm } from "../data/curriculum.js";
-import { advisedCourses, blockOpen, blockSections, blocks, picked } from "../lib/enrollment.js";
-import { conflicts, isFull, overlaps, section, sumUnits, when } from "../lib/schedule.js";
-import { currentUser } from "../data/auth.js";
-import { Countdown, useEnrollment } from "../state/Enrollment.jsx";
+import { advisedCourses, blockOpen, blockSections, picked } from "../lib/enrollment.js";
+import { conflicts, isFull, overlaps, reqText, section, sumUnits, when } from "../lib/schedule.js";
+import { api } from "../lib/api.js";
+import { Countdown, fmtDateTime, formatLeft, useClock, useEnrollment } from "../state/Enrollment.jsx";
 import { useToast } from "../state/Toast.jsx";
 import Icon from "../components/Icon.jsx";
 import Seats from "../components/Seats.jsx";
@@ -13,15 +12,15 @@ import Timetable from "../components/Timetable.jsx";
 const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 export default function Advise() {
-  const { state, closed } = useEnrollment();
+  const { data, state, windowState } = useEnrollment();
   const { enrolled, load, label } = state;
 
   return (
     <section className="page active" id="page-advise" aria-labelledby="page-title">
       <div className="advise-head">
-        <div className="term-pill">1st Semester, A.Y. 2026-2027</div>
-        {!enrolled && (
-          <div className="window-pill"><Icon name="clock" /><span>Window open: <b role="timer"><Countdown /></b> left</span></div>
+        <div className="term-pill">{data.term.label}</div>
+        {!enrolled && windowState !== "closed" && (
+          <div className="window-pill"><Icon name="clock" /><span>{windowState === "open" ? "Window open" : "Opens in"}: <b role="timer"><Countdown /></b>{windowState === "open" && " left"}</span></div>
         )}
       </div>
 
@@ -29,27 +28,70 @@ export default function Advise() {
         <div className="card sl-empty">
           <span className="done-ic"><Icon name="check" /></span>
           <h3>You&rsquo;re enrolled</h3>
-          <p>{label}: {load.length} courses, {sumUnits(load)} units. Your study load has been sent to your school email.</p>
+          <p>{label}: {load.length} courses, {sumUnits(load)} units.</p>
           <Link className="btn btn-primary" to="/studyload"><span>View study load</span><Icon name="arrow" /></Link>
-          <p className="done-foot">Need changes? Add, drop, or change groups during the adjustment period, Aug 10-14.</p>
+          <p className="done-foot">Need changes? Add, drop, or change groups during the adjustment period.</p>
         </div>
       ) : (
-        <EnrollFlow closed={closed} />
+        <EnrollFlow />
       )}
     </section>
   );
 }
 
-function EnrollFlow({ closed }) {
-  const { state, dispatch } = useEnrollment();
+// Keeps the student's place in the enrollment line while active, checking in every few seconds.
+function useQueue(active) {
+  const [q, setQ] = useState({ status: "joining" });
+  const tick = useCallback(async () => {
+    try {
+      setQ(await api("/queue", { method: "POST", body: {} }));
+    } catch (err) {
+      if (err.status !== 401) setQ({ status: "error", message: err.message });
+    }
+  }, []);
+  useEffect(() => {
+    if (!active) return undefined;
+    tick();
+    const id = setInterval(tick, q.status === "admitted" ? 20000 : 5000);
+    return () => clearInterval(id);
+  }, [active, tick, q.status === "admitted"]); // eslint-disable-line react-hooks/exhaustive-deps
+  return [q, tick];
+}
+
+function EnrollFlow() {
+  const { data, state, dispatch, windowState, refreshSeats, saveAdvising, enroll } = useEnrollment();
+  const { now } = useClock();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
   const advising = state.step === "advise";
-  const advised = advisedCourses(state);
+  const advised = advisedCourses(data, state);
   const advisedUnits = sumUnits(advised);
-  const list = picked(state);
+  const list = picked(data, state);
   const units = sumUnits(list);
   const clashes = conflicts(list);
+  const maxUnits = data.maxUnits;
+
+  // Why the student can't pick groups yet, if anything.
+  const gate = !data.payment ? "payment" : windowState !== "open" ? windowState : null;
+  const [queue, retick] = useQueue(!advising && !gate);
+  const admitted = queue.status === "admitted";
+  const turnLeft = admitted ? Date.parse(queue.expiresAt) - now : 0;
+
+  // Live seat counts while choosing.
+  useEffect(() => {
+    if (!admitted) return undefined;
+    refreshSeats();
+    const id = setInterval(refreshSeats, 10000);
+    return () => clearInterval(id);
+  }, [admitted, refreshSeats]);
+
+  // When the turn runs out, rejoin the line.
+  useEffect(() => {
+    if (admitted && turnLeft <= 0) {
+      toast("Your turn ended. You’re back in line.");
+      retick();
+    }
+  }, [admitted, turnLeft <= 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The bar at the bottom: what's chosen so far and the next action.
   let title = "";
@@ -58,19 +100,19 @@ function EnrollFlow({ closed }) {
   let disabled = true;
   let warn = false;
   if (advising) {
-    const over = advisedUnits - MAX_UNITS;
+    const over = advisedUnits - maxUnits;
     title = `${plural(advised.length, "course")}, ${advisedUnits} units advised`;
     meta = !advised.length ? "Select at least one course"
-      : over > 0 ? `Over the ${MAX_UNITS}-unit limit by ${plural(over, "unit")}`
-      : `Next, choose your block or groups (max ${MAX_UNITS} units)`;
+      : over > 0 ? `Over the ${maxUnits}-unit limit by ${plural(over, "unit")}`
+      : `Next, choose your block or groups (max ${maxUnits} units)`;
     warn = over > 0;
     action = "Continue to enroll";
-    disabled = closed || !advised.length || over > 0;
+    disabled = windowState === "closed" || !advised.length || over > 0;
   } else if (state.mode === "block") {
     title = state.block ? `Block ${state.block}: ${list.length} courses, ${units} units` : "No block selected";
-    meta = state.block ? "Fixed schedule, no time conflicts" : "Pick Block A or Block B above";
-    action = closed ? "Window closed" : state.block ? `Enroll in Block ${state.block}` : "Enroll";
-    disabled = closed || !state.block;
+    meta = state.block ? "Fixed schedule, no time conflicts" : "Pick a block above";
+    action = state.block ? `Enroll in Block ${state.block}` : "Enroll";
+    disabled = !state.block;
   } else if (state.mode === "custom") {
     const missing = advised.length - list.length;
     title = `Non-block: ${list.length} of ${advised.length} courses scheduled, ${units} units`;
@@ -78,25 +120,36 @@ function EnrollFlow({ closed }) {
       : missing ? `Choose a group for ${missing} more ${missing === 1 ? "course" : "courses"}`
       : "No time conflicts";
     warn = clashes.length > 0;
-    action = closed ? "Window closed" : `Enroll ${plural(advised.length, "course")}`;
-    disabled = closed || missing > 0 || clashes.length > 0;
+    action = `Enroll ${plural(advised.length, "course")}`;
+    disabled = missing > 0 || clashes.length > 0;
   }
 
-  const next = () => {
-    if (!currentUser()) return; // The layout's session check sends the student to sign in.
-    if (advising) {
-      dispatch({ type: "step", step: "enroll" });
-      window.scrollTo(0, 0);
-      return;
-    }
+  const next = async () => {
     setBusy(true);
-    setTimeout(() => {
-      const label = state.mode === "block" ? `Block ${state.block}` : "Non-block";
-      dispatch({ type: "enroll", load: list, label });
-      toast(`Done. You’re enrolled${state.mode === "block" ? ` in ${label}` : ""}, ${list.length} courses.`);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 700);
+    try {
+      if (advising) {
+        await saveAdvising(advised.map((c) => c.id));
+        dispatch({ type: "step", step: "enroll" });
+        window.scrollTo(0, 0);
+      } else {
+        const body = state.mode === "block" ? { mode: "block", block: state.block }
+          : { mode: "custom", groups: Object.fromEntries(advised.map((c) => [c.id, state.groups[c.id]])) };
+        const done = await enroll(body);
+        toast(`Done. You’re enrolled${state.mode === "block" ? ` in ${done.label}` : ""}, ${done.load.length} courses.`);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    } catch (err) {
+      toast(err.message);
+      if (err.status === 409) {
+        refreshSeats();
+        retick();
+      }
+    } finally {
+      setBusy(false);
+    }
   };
+
+  const showBar = advising || (admitted && state.mode);
 
   return (
     <div>
@@ -112,17 +165,33 @@ function EnrollFlow({ closed }) {
       </ol>
 
       {advising ? <AdvisePane /> : (
-        <EnrollPane list={list} clashes={clashes} advised={advised} advisedUnits={advisedUnits} />
+        <>
+          <div className="enroll-step-head">
+            <button className="linkish js-back" type="button" onClick={() => { dispatch({ type: "step", step: "advise" }); window.scrollTo(0, 0); }}>
+              &larr; Back to advising
+            </button>
+            <span>Advised: {advised.length} courses, {advisedUnits} units</span>
+          </div>
+          {gate ? <GateCard gate={gate} />
+            : admitted ? (
+              <>
+                <div className="turn-pill" role="status">
+                  <Icon name="clock" /><span>It&rsquo;s your turn. Finish within <b>{formatLeft(turnLeft)}</b></span>
+                </div>
+                <EnrollPane list={list} clashes={clashes} advised={advised} />
+              </>
+            ) : <QueueCard queue={queue} />}
+        </>
       )}
 
-      {(advising || state.mode) && (
+      {showBar && (
         <div className={`enroll-bar${warn ? " has-conflict" : ""}`} id="enroll-bar">
           <div className="eb-info">
             <b className="js-eb-title">{title}</b>
             <span className="js-eb-meta">{meta}</span>
           </div>
           <button className="btn btn-primary btn-lg js-enroll" type="button" disabled={disabled || busy} onClick={next}>
-            {busy ? "Enrolling…" : action}
+            {busy ? (advising ? "Saving…" : "Enrolling…") : action}
           </button>
         </div>
       )}
@@ -130,11 +199,47 @@ function EnrollFlow({ closed }) {
   );
 }
 
+function GateCard({ gate }) {
+  const { opens, closes } = useClock();
+  const text = {
+    payment: ["Pay your downpayment first", "You can pick your schedule once the Registrar’s Office records your downpayment."],
+    upcoming: ["Your window hasn’t opened yet", `Come back ${fmtDateTime(opens)} to pick your schedule. Your courses are saved.`],
+    closed: ["Your window has closed", `Enrollment closed ${fmtDateTime(closes)}. Visit the Registrar’s Office for help.`]
+  }[gate];
+  return (
+    <div className="card sl-empty gate-card">
+      <Icon name={gate === "payment" ? "wallet" : "clock"} className="sl-empty-ic" />
+      <h3>{text[0]}</h3>
+      <p>{text[1]}</p>
+      {gate === "payment" && <Link className="btn btn-primary" to="/downpayment"><span>See downpayment</span><Icon name="arrow" /></Link>}
+    </div>
+  );
+}
+
+// Shown while waiting for a turn in the enrollment line.
+function QueueCard({ queue }) {
+  if (queue.status === "error") {
+    return <div className="card sl-empty gate-card" role="alert"><h3>Can&rsquo;t join the line</h3><p>{queue.message}</p></div>;
+  }
+  const waiting = queue.status === "waiting";
+  return (
+    <div className="card sl-empty queue-card" role="status" aria-live="polite">
+      <span className="queue-n">{waiting ? `#${queue.position}` : "…"}</span>
+      <h3>{waiting ? "You’re in line" : "Joining the line…"}</h3>
+      <p>
+        {!waiting ? "One moment."
+          : queue.position === 1 ? "You’re next. Keep this page open; your turn starts automatically."
+          : `${plural(queue.position - 1, "student")} ahead of you. Keep this page open; your turn starts automatically.`}
+      </p>
+    </div>
+  );
+}
+
 /* Step 1: choose courses */
 function AdvisePane() {
-  const { state, dispatch } = useEnrollment();
-  const extras = offerable.filter((c) => c.status === "available");
-  const locked = catalog.filter((c) => c.status === "locked");
+  const { data, state, dispatch } = useEnrollment();
+  const extras = data.offerable.filter((c) => c.status === "available");
+  const locked = data.catalog.filter((c) => c.status === "locked");
   const [extraOpen, setExtraOpen] = useState(() => extras.some((c) => state.advised[c.id]));
 
   const item = (c) => (
@@ -158,8 +263,8 @@ function AdvisePane() {
         <h3>Which courses are you taking this semester?</h3>
         <p>Your curriculum for this term is already checked. You can also add courses from other terms if you&rsquo;ve passed their prerequisites.</p>
       </div>
-      <h4 className="al-head">This term: 2nd Year, 1st Semester</h4>
-      <ul className="advise-list" id="advise-current">{thisTerm.map(item)}</ul>
+      <h4 className="al-head">This term: {data.terms[data.currentTermIndex]?.name}</h4>
+      <ul className="advise-list" id="advise-current">{data.thisTerm.map(item)}</ul>
       <details className="al-locked al-extra js-extra" open={extraOpen} onToggle={(e) => setExtraOpen(e.currentTarget.open)}>
         <summary><Icon name="list" /><span>Add courses from other terms ({extras.length})</span><span className="al-sub">Prerequisites passed</span></summary>
         <ul className="advise-list" id="advise-extra">{extras.map(item)}</ul>
@@ -176,24 +281,19 @@ function AdvisePane() {
           ))}
         </ul>
       </details>
-      <p className="cc-foot">You&rsquo;ll pick schedules in the next step. Maximum load is {MAX_UNITS} units per semester.</p>
+      <p className="cc-foot">You&rsquo;ll pick schedules in the next step. Maximum load is {data.maxUnits} units per semester.</p>
     </div>
   );
 }
 
 /* Step 2: Block or Non-block */
-function EnrollPane({ list, clashes, advised, advisedUnits }) {
-  const { state, dispatch } = useEnrollment();
-  const open = blockOpen(state);
+function EnrollPane({ list, clashes, advised }) {
+  const { data, state, dispatch } = useEnrollment();
+  const open = blockOpen(data, state);
+  const blockNames = Object.keys(data.blocks).map((k) => `Block ${k}`).join(" or ");
 
   return (
     <div className="js-enroll-step">
-      <div className="enroll-step-head">
-        <button className="linkish js-back" type="button" onClick={() => { dispatch({ type: "step", step: "advise" }); window.scrollTo(0, 0); }}>
-          &larr; Back to advising
-        </button>
-        <span>Advised: {advised.length} courses, {advisedUnits} units</span>
-      </div>
 
       <fieldset className="mode-pick">
         <legend className="sr">How do you want to enroll?</legend>
@@ -203,8 +303,9 @@ function EnrollPane({ list, clashes, advised, advisedUnits }) {
           <span className="mo-body">
             <b>Block section</b>
             <span className="js-block-desc">
-              {open ? "Join Block A or Block B. Your whole schedule is fixed, and you take every class with the same blockmates."
-                : `Blocks run exactly this term’s ${thisTerm.length} courses. Advise those, and only those, to join one.`}
+              {open ? `Join ${blockNames}. Your whole schedule is fixed, and you take every class with the same blockmates.`
+                : Object.keys(data.blocks).length ? `Blocks run exactly this term’s ${data.thisTerm.length} courses. Advise those, and only those, to join one.`
+                : "There are no blocks for your year this term."}
             </span>
           </span>
         </label>
@@ -232,7 +333,7 @@ function EnrollPane({ list, clashes, advised, advisedUnits }) {
 }
 
 function BlockPicker() {
-  const { state, dispatch } = useEnrollment();
+  const { data, state, dispatch } = useEnrollment();
   return (
     <div className="course-card js-block-pane">
       <div className="cc-head">
@@ -240,12 +341,12 @@ function BlockPicker() {
         <p>Each block has a fixed schedule. Seats are reserved for the whole block, so you get every class.</p>
       </div>
       <div className="blocks" id="blocks">
-        {Object.entries(blocks).map(([key, b]) => {
+        {Object.entries(data.blocks).map(([key, b]) => {
           const left = b.cap - b.enrolled;
-          const secs = blockSections(key);
+          const secs = blockSections(data, key);
           return (
             <label className="block-opt" key={key}>
-              <input type="radio" name="block" value={key} checked={state.block === key} disabled={left <= 0}
+              <input type="radio" name="block" value={key} checked={state.block === key} disabled={left <= 0 && state.block !== key}
                 onChange={() => dispatch({ type: "block", block: key })} />
               <span className="bo-head">
                 <b>Block {key}</b>
@@ -278,7 +379,7 @@ function GroupPicker({ list, clashes, advised }) {
     <div className="course-card js-custom-pane">
       <div className="cc-head">
         <h3>Choose a group for each course</h3>
-        <p>Every course has 5 groups with different schedules. Pick one for each course you advised.</p>
+        <p>Each course has several groups with different schedules. Pick one for each course you advised. Seat counts update live.</p>
       </div>
       <table className="ctable gtable">
         <thead>
@@ -291,7 +392,7 @@ function GroupPicker({ list, clashes, advised }) {
             // Grey out groups that are full or overlap a group already picked for another course.
             const others = list.filter((o) => o.id !== c.id);
             let open = 0;
-            const options = c.groups.map(([g]) => {
+            const options = (c.groups || []).map(([g]) => {
               const s = section(c, g);
               const full = isFull(s);
               const hit = others.find((o) => overlaps(s, o));
@@ -304,6 +405,7 @@ function GroupPicker({ list, clashes, advised }) {
             });
             const clash = sec && clashWith[c.id];
             const stuck = !sec && !open;
+            const none = !c.groups?.length;
             return (
               <tr key={c.id} className={`grow${clash ? " has-clash" : ""}${sec ? "" : " is-skipped"}`}>
                 <td className="g-course"><span className="code">{c.code}</span><span className="ctitle">{c.title}</span></td>
@@ -314,7 +416,7 @@ function GroupPicker({ list, clashes, advised }) {
                     {options}
                   </select>
                   {clash && <span className="clash-msg">Overlaps with {clash}</span>}
-                  {stuck && <span className="clash-msg">Every open group overlaps your other picks. Change another course&rsquo;s group.</span>}
+                  {stuck && <span className="clash-msg">{none ? "No groups are offered this term. Go back and remove this course." : "Every open group overlaps your other picks. Change another course’s group."}</span>}
                 </td>
                 <td className="g-fac">{sec ? <>{sec.room}<span className="room">{sec.faculty}</span></> : <span className="room">-</span>}</td>
                 <td className="c-seats">{sec && <Seats enrolled={sec.enrolled} cap={sec.cap} />}</td>
@@ -324,7 +426,7 @@ function GroupPicker({ list, clashes, advised }) {
           })}
         </tbody>
       </table>
-      <p className="cc-foot">Changed your mind later? You can add, drop, or change groups during the adjustment period, Aug 10-14.</p>
+      <p className="cc-foot">Changed your mind later? You can add, drop, or change groups during the adjustment period.</p>
     </div>
   );
 }
