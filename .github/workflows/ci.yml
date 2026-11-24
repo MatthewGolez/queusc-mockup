@@ -1,0 +1,25 @@
+name: CI
+
+# Builds the React app and checks the server code on every push and pull request.
+# The site itself runs on the DCISM server (see README), not GitHub Pages, since it needs Node.js and MariaDB.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Check server syntax
+        run: for f in server/*.js; do node --check "$f"; done

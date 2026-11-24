@@ -1,5 +1,30 @@
-/* BS Information Systems prospectus (effective 2023), what the demo student has passed,
-   and the class groups on offer this term. */
+/* Seed data for the database: students, the BS Information Systems prospectus (effective 2023),
+   class groups for this term, and the two blocks. Loaded by server/setup.js. */
+
+export const program = {
+  code: "BSIS", name: "BS Information Systems", degree: "Bachelor of Science in Information Systems", effectiveYear: 2023
+};
+
+export const students = [
+  { id: "25100872", email: "25100872@usc.edu.ph", first: "Caroline", middle: "Sio Ang", last: "Gobonseng", color: "#7B57B8" },
+  { id: "25100916", email: "25100916@usc.edu.ph", first: "Sebastian", middle: "Douglas Sauro", last: "Subang", color: "#2F5FB3" },
+  { id: "22103502", email: "22103502@usc.edu.ph", first: "Matthew", middle: "Benedict", last: "Golez", color: "#8A5A4A" }
+];
+export const YEAR_LEVEL = 2;
+
+// Faculty accounts. sectionName links them to the groups they teach.
+export const faculty = [
+  { id: "F1001", email: "chrisray.belarmino@usc.edu.ph", first: "Chris Ray", middle: "", last: "Belarmino", color: "#1F6F5C",
+    sectionName: "Belarmino, Chris Ray B." }
+];
+
+export const registrar = [
+  { id: "R1001", email: "registrar@usc.edu.ph", first: "Registrar", middle: "", last: "Office", color: "#9A6B12" }
+];
+
+// Every sample student has passed the terms before 2nd Year, 1st Semester.
+export const PASSED_TERMS = 3;
+export const DOWNPAYMENT = 3000;
 
 // [code, title, units, requisite]. A requisite is a list of course codes, or a year standing like "3rd".
 export const terms = [
@@ -75,23 +100,8 @@ export const terms = [
       ["IS 4202", "Practicum B", 6, ["IS 4102"]] ] }
   ];
 
-// The demo student: enrolling for 2nd Year, 1st Semester, with every earlier term passed.
-const CURRENT = 3;
-const STANDING = 2;
-export const MAX_UNITS = 30;
-export const DEGREE = "Bachelor of Science in Information Systems";
-export const EFFECTIVE_YEAR = 2023;
-
-const YEARS = ["", "1st", "2nd", "3rd", "4th"];
-export function termName(t) {
-  return t.term === "Summer" ? `${YEARS[t.year]} Year, Summer` : `${YEARS[t.year]} Year, ${t.term} Semester`;
-}
-const idOf = (code) => code.toLowerCase().replace(/[^a-z0-9]/g, "");
-
-const passed = new Set(terms.slice(0, CURRENT).flatMap((t) => t.courses.map((c) => c[0])));
-
 // Each group: [number, days, start, end, room, faculty, enrolled, capacity]
-const handGroups = {
+export const handGroups = {
     cis2101: [
     [1, "T Th", "07:30", "10:00", "LB446 TC", "Sabandal, Gran G.", 27, 30],
     [2, "M W", "07:30", "10:00", "LB447 TC", "Enriquez, Kirstine Mae N.", 30, 30],
@@ -155,7 +165,7 @@ const SLOTS3 = [["M W", "07:30", "10:00"], ["T Th", "10:00", "12:30"], ["F", "07
 const SLOTS_SHORT = [["F", "08:00", "10:00"], ["T Th", "17:30", "18:30"], ["S", "10:00", "12:00"], ["F", "14:00", "16:00"],
   ["M W", "17:30", "18:30"], ["S", "08:00", "10:00"], ["F", "10:00", "12:00"]];
 
-function generateGroups(code, units) {
+export function generateGroups(code, units) {
   let h = 0;
   for (const ch of code) h = (h * 31 + ch.charCodeAt(0)) % 9973;
   const pool = units >= 3 ? SLOTS3 : SLOTS_SHORT;
@@ -168,43 +178,12 @@ function generateGroups(code, units) {
   });
 }
 
-const COLORS = { "CIS 2101": "#FF6B6B", "CIS 2102": "#1FC7B6", "CIS 2103": "#FF9A4D", "CIS 2105": "#4DB8F5",
+export const COLORS = { "CIS 2101": "#FF6B6B", "CIS 2102": "#1FC7B6", "CIS 2103": "#FF9A4D", "CIS 2105": "#4DB8F5",
   "IS 3103": "#5EDB6E", "IS 4103": "#E8A530", "GE-ETHICS": "#FFD43B", "GE-FREELEC 2": "#B58CFF", "TPE 2103": "#7C9CFF" };
-const PALETTE = ["#3DDC97", "#FF7EB6", "#FFB13D", "#2BD4E8", "#C77DFF", "#9BDB4D", "#F06292", "#5C9DFF", "#F9D923", "#FF8A5B"];
+export const PALETTE = ["#3DDC97", "#FF7EB6", "#FFB13D", "#2BD4E8", "#C77DFF", "#9BDB4D", "#F06292", "#5C9DFF", "#F9D923", "#FF8A5B"];
 
-// Every course gets a status: passed, current (this term), available (prerequisites met), or locked.
-let extra = 0;
-export const catalog = terms.flatMap((t, ti) =>
-  t.courses.map(([code, title, units, req]) => {
-    let status;
-    let reason = "";
-    if (passed.has(code)) status = "passed";
-    else if (ti === CURRENT) status = "current";
-    else if (typeof req === "string" && parseInt(req, 10) > STANDING) {
-      status = "locked";
-      reason = `Needs ${req} year standing`;
-    } else {
-      const missing = (Array.isArray(req) ? req : []).filter((r) => !passed.has(r));
-      status = missing.length ? "locked" : "available";
-      if (missing.length) reason = `Needs ${missing.join(" and ")}`;
-    }
-    const course = { id: idOf(code), code, title, units, req, term: t, termIndex: ti, termName: termName(t), status, reason };
-    if (status === "current" || status === "available") {
-      course.color = COLORS[code] || PALETTE[extra++ % PALETTE.length];
-      course.groups = handGroups[course.id] || generateGroups(code, units);
-    }
-    return course;
-  })
-);
-
-export const currentTerm = terms[CURRENT];
-
-// What the student may advise: this term's curriculum, then anything else whose prerequisites are passed.
-export const thisTerm = catalog.filter((c) => c.status === "current");
-export const offerable = [...thisTerm, ...catalog.filter((c) => c.status === "available")];
-
-export function reqText(req) {
-  if (!req) return "";
-  if (typeof req === "string") return `${req} year standing`;
-  return `Prerequisite: ${req.join(", ")}`;
-}
+// Blocks: a fixed group for every course this term. Seats are held for the block as a whole.
+export const blocks = {
+  A: { picks: { "CIS 2101": 3, "CIS 2102": 1, "CIS 2103": 2, "CIS 2105": 3, "GE-ETHICS": 1, "GE-FREELEC 2": 1, "IS 3103": 1, "IS 4103": 1, "TPE 2103": 1 }, enrolled: 31, cap: 40 },
+  B: { picks: { "CIS 2101": 1, "CIS 2102": 4, "CIS 2103": 5, "CIS 2105": 2, "GE-ETHICS": 2, "GE-FREELEC 2": 2, "IS 3103": 4, "IS 4103": 2, "TPE 2103": 2 }, enrolled: 37, cap: 40 }
+};

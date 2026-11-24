@@ -1,5 +1,5 @@
 import { Component } from "react";
-import { signOut } from "../data/auth.js";
+import { api } from "../lib/api.js";
 
 // Catches a crash while rendering a page and shows what went wrong, instead of leaving a blank screen.
 // It clears itself when the student moves to another page (resetKey changes).
@@ -18,8 +18,8 @@ export default class ErrorBoundary extends Component {
     if (this.state.error && prev.resetKey !== this.props.resetKey) this.setState({ error: null });
   }
 
-  startOver = () => {
-    signOut();
+  startOver = async () => {
+    await api("/logout", { method: "POST", body: {} }).catch(() => {});
     window.location.hash = "#/login";
     window.location.reload();
   };

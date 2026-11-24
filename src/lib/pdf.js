@@ -131,3 +131,30 @@ function drawCourseList(doc, courses, opts, { mx, top, pageW, pageH }) {
   doc.setFont("helvetica", "bold");
   doc.text(`Total units: ${opts.units.toFixed(1)}`, mx + listW - 2, endY + 5, { align: "right" });
 }
+
+// A one-page official receipt for the downpayment.
+export function buildReceiptPdf(r) {
+  const doc = new jsPDF({ unit: "mm", format: "a5", orientation: "landscape" });
+  const pageW = doc.internal.pageSize.getWidth();
+  const mx = 14;
+  doc.setTextColor(INK);
+  doc.setFont("helvetica", "bold").setFontSize(15);
+  doc.text("Official Receipt", mx, 18);
+  doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(MUTED);
+  doc.text("QueuSC, University of San Carlos", mx, 24);
+  doc.text(`Reference ${r.reference}`, pageW - mx, 18, { align: "right" });
+  doc.text(r.paidAt, pageW - mx, 24, { align: "right" });
+  doc.setDrawColor(LINE).setLineWidth(0.3).line(mx, 29, pageW - mx, 29);
+
+  const rows = [["Received from", r.student], ["Program", r.program], ["For", `Downpayment, ${r.term}`], ["Paid through", r.channel]];
+  let y = 39;
+  for (const [k, v] of rows) {
+    doc.setTextColor(MUTED).setFontSize(9).text(k, mx, y);
+    doc.setTextColor(INK).setFontSize(10.5).text(String(v), mx + 34, y);
+    y += 8;
+  }
+  doc.line(mx, y, pageW - mx, y);
+  doc.setFont("helvetica", "bold").setFontSize(13).text("Amount paid", mx, y + 10);
+  doc.text(r.amount, pageW - mx, y + 10, { align: "right" });
+  return doc;
+}

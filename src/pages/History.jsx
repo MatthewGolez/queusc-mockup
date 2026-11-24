@@ -1,5 +1,5 @@
-import { DEGREE, EFFECTIVE_YEAR, catalog, currentTerm, reqText, termName, terms } from "../data/curriculum.js";
 import { useEnrollment } from "../state/Enrollment.jsx";
+import { reqText } from "../lib/schedule.js";
 
 const STATUS = {
   passed: ["st-passed", "Passed"],
@@ -10,15 +10,16 @@ const STATUS = {
 };
 
 export default function History() {
-  const { state } = useEnrollment();
+  const { data, state } = useEnrollment();
+  const { catalog, terms, currentTermIndex, program } = data;
   const enrolledGroup = state.enrolled ? Object.fromEntries(state.load.map((c) => [c.id, c.group])) : {};
 
   return (
     <section className="page active" id="page-history" aria-labelledby="page-title">
       <div className="hist-top">
         <div>
-          <h2 className="hist-degree">{DEGREE}</h2>
-          <p className="hist-eff">Effective Year: {EFFECTIVE_YEAR}</p>
+          <h2 className="hist-degree">{program?.degree}</h2>
+          <p className="hist-eff">Effective Year: {program?.effectiveYear}</p>
         </div>
         <ul className="hist-legend">
           {["passed", "current", "available", "locked"].map((k) => (
@@ -32,16 +33,16 @@ export default function History() {
           const rows = catalog.filter((c) => c.termIndex === ti);
           const units = rows.reduce((s, c) => s + c.units, 0);
           const done = rows.filter((c) => c.status === "passed").length;
-          const isNow = t === currentTerm;
+          const isNow = ti === currentTermIndex;
           return (
-            <div key={termName(t)} className={`card hist-term${isNow ? " is-current" : ""}`}>
+            <div key={t.name} className={`card hist-term${isNow ? " is-current" : ""}`}>
               <h3>
-                {termName(t)}
+                {t.name}
                 {isNow && <> <span className="tag tag-gold">This term</span></>}
                 <span className="hist-count">{done === rows.length ? "All passed" : done ? `${done} of ${rows.length} passed` : ""}</span>
               </h3>
               <table className="pros-table">
-                <thead><tr><th>Course</th><th>Description</th><th>Units</th><th>Requisite</th><th>Status</th></tr></thead>
+                <thead><tr><th>Course</th><th>Description</th><th>Units</th><th>Requisite</th><th>Grade</th><th>Status</th></tr></thead>
                 <tbody>
                   {rows.map((c) => {
                     const key = enrolledGroup[c.id] ? "enrolled" : c.status;
@@ -52,6 +53,7 @@ export default function History() {
                         <td>{c.title}</td>
                         <td>{c.units.toFixed(1)}</td>
                         <td className="pt-req">{reqText(c.req) || <span className="pt-none">-</span>}</td>
+                        <td className="pt-grade">{c.grade != null ? c.grade.toFixed(1) : <span className="pt-none">-</span>}</td>
                         <td className="pt-status">
                           <span className={`st ${STATUS[key][0]}`}>{STATUS[key][1]}</span>
                           {note && <span className="pt-note">{note}</span>}

@@ -26,9 +26,10 @@ export const roomCode = (c) => c.room.replace(/\s+/g, "");
 export const when = (sec) => `${sec.days.join(" ")} ${fmtTime(sec.start)} - ${fmtTime(sec.end)}`;
 export const isFull = (sec) => sec.enrolled >= sec.cap;
 
-// A course in one specific group, flattened into what the timetable and PDFs need.
+// A course in one specific group, flattened into what the timetable and PDFs need. Null if there's no such group.
 export function section(course, n) {
-  const g = course.groups.find((row) => row[0] === n);
+  const g = course.groups?.find((row) => row[0] === n);
+  if (!g) return null;
   return {
     id: course.id, code: course.code, title: course.title, units: course.units, color: course.color, group: g[0],
     days: g[1].split(" "), start: g[2], end: g[3], room: g[4], faculty: g[5], enrolled: g[6], cap: g[7]
@@ -57,4 +58,11 @@ export function gridShape(list) {
   const first = Math.floor(Math.min(...list.map((c) => toMin(c.start))) / SLOT) * SLOT;
   const last = Math.ceil(Math.max(...list.map((c) => toMin(c.end))) / SLOT) * SLOT;
   return { days, first, slots: (last - first) / SLOT };
+}
+
+// "Prerequisite: CIS 1201" or "3rd year standing"
+export function reqText(req) {
+  if (!req) return "";
+  if (typeof req === "string") return `${req} year standing`;
+  return `Prerequisite: ${req.join(", ")}`;
 }
